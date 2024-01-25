@@ -9,7 +9,7 @@ static volatile RCC* const rcc = (RCC*)RCC_BASE;
 
 
 /**
- * Turns on the LED correpsonding withthe number. 1 = right most
+ * Turns on the LED corresponding with the number. 1 = right most
 */
 void led_enable(int number)
 {
