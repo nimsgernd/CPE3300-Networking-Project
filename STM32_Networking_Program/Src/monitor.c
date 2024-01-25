@@ -26,7 +26,7 @@ void monitor_init(void)
     // Enable clock for tim3
     rcc->APB1ENR |= TIM3EN;
 
-    // For additonal timer, un-comment the following line for TIM4    
+    // For additional timer, un-comment the following line for TIM4
     // rcc->APB1ENR |= TIM4EN; 
 
     // Set PA6 to alternate function for TIC/TOC
