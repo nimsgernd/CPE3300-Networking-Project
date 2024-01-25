@@ -1,4 +1,4 @@
-#include <stdlib.c>
+#include <stdlib.h>
 #include "monitor.h"
 #include "gpio.h"
 
