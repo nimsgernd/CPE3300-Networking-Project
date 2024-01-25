@@ -9,7 +9,7 @@
  * IMPORTANT: INPUT SIGNAL ASSUMED TO BE ON ARDUINO HEADER/PIN PA_6!!!!
 */
 
-/* Adresses*/
+/* Addresses*/
 static volatile TIMER* const tim3 = (TIMER*)TIM3_BASE;
 static volatile RCC* const rcc = (RCC*)RCC_BASE;
 static volatile uint32_t* const nvic_iser0 = (uint32_t*)NVIC_BASE;
@@ -26,7 +26,7 @@ void monitor_init(void)
     // Enable clock for tim3
     rcc->APB1ENR |= TIM3EN;
 
-    // For aditonal timer, uncoment the following line for TIM4    
+    // For additonal timer, un-comment the following line for TIM4    
     // rcc->APB1ENR |= TIM4EN; 
 
     // Set PA6 to alternate function for TIC/TOC
