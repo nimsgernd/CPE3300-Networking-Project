@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include "monitor.h"
 #include "gpio.h"
-#include "uart_driver.h"
 
 
 /**
@@ -16,7 +15,7 @@ static volatile uint32_t* const nvic_iser0 = (uint32_t*)NVIC_BASE;
 static volatile GPIO* const gpioa = (GPIO*)GPIOA_BASE;
 
 /* File variables and constants*/
-static State state = IDLE; // Current state
+static enum State state = IDLE; // Current state
 
 void monitor_init(void)
 {
