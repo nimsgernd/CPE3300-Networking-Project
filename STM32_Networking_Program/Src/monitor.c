@@ -32,7 +32,7 @@ void monitor_init(void)
     gpioa->MODER |= GPIOA_PA6_MODER_AF;
 
     // Set PA6 to alternate function in Alternate Function Register Low (for GPIO pins 0 - 7)
-    gpioa->AFRL = AF2 << AFRL_PA6_AF2
+    gpioa->AFRL = AF2 << AFRL_PA6_AF2;
 
     // Open interrupt for TIM3
     *nvic_iser0 = TIM3_POS;
