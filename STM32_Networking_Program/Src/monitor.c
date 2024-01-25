@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include "monitor.h"
 #include "gpio.h"
 #include "uart_driver.h"
