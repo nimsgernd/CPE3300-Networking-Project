@@ -22,9 +22,7 @@
 #define TIM3_BASE 0x40000400
 #define TIM4_BASE 0x40000800
 #define NVIC_BASE 0xE000E100
-
-
-#define EXTI15 1<<15
+#define SYSCFG_EXTICR2_BASE 0x4001380C
 
 /**********************************************************************************************
  *                                          TIM BITS                                          *
@@ -41,27 +39,45 @@
 #define TIM4_POS 1 << 30
 
 // Capture/Compare 1 interrupt enable for channel 1 [0 = disabled, 1 = enabled]
-#define DIER_CC1 1<<1
+#define CC1IE 1<<1
 
 // Status Register Interrupt Pending Flag for channel 1
+// This bit is set by hardware on a capture. It is cleared by software or by
+// reading the TIMx_CCR1 register
 #define TIMx_SR_CC1F 1<<1
+
+// CCMR to configure TIM3 to Timer Input Capture TIC
+#define CC1S 0b10
+
+// Capture Compare 1 Enable bit in CCER [0  = disabled, 1 = enabled]
+#define CC1E 1<<0
+
+// Capture Compare 1 Polarity for Capture/Compare on high
+#define CC1P 1 << 1
+
+// Capture Compare 1 Complimentary output enable
+#define CC1NP 1 << 3
+
 
 
 /**********************************************************************************************
  *                                          GPIO BITS                                         *
  **********************************************************************************************/
 // RCC AHB1 peripheral clock enable register GPIO Enable bits [0  = disabled, 1 = enaabled]
-#define GPIOBEN 1<<1
 #define GPIOAEN 1<<0
+#define GPIOBEN 1<<1
 
-// Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH for TIC/TOC. 
+// Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL for TIC/TOC. 
 // [0 = disabled, 1 = enabled]
 #define AF2 0b0010
+#define AFRL_PA6_AF2 AF2 << 6
+#define GPIOA_PA6_MODER_AF AF2 << 12
 
 /**********************************************************************************************
  *                                          EXTI BITS                                         *
  **********************************************************************************************/
-
+// EXTICR2 used for lines 4-7 corresponding with PA4-PA7
+#define SYSCFG_PA6_EXTICR2 0b0000
 
 
 

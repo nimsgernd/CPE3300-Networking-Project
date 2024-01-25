@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "monitor.h"
 #include "gpio.h"
+#include "uart_driver.h"
 
 
 /**
@@ -26,7 +27,7 @@ void monitor_init(void)
 
     // For aditonal timer, uncoment the following line for TIM4    
     // rcc->APB1ENR |= TIM4EN; 
-s
+
     // Set PA6 to alternate function for TIC/TOC
     gpioa->MODER |= GPIOA_PA6_MODER_AF;
 
