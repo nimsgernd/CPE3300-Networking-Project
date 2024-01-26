@@ -54,7 +54,7 @@ void monitor_init(void)
 }
 
 
-// Timer 3 interrupt fires when the timer is active for over 1.33ms
+// Timer 3 interrupt fires when the timer is active for over 1.`3ms
 void TIM3_IRQHandler(void)
 {
 	// Clear interrupt flag
@@ -62,10 +62,10 @@ void TIM3_IRQHandler(void)
 	int channel = (gpioa->IDR)&0x40; // Mask for bit 6 (PA6)
 	channel = channel >> 6;          // Right shift to position 0
 	if(channel == 1){
-		// channel has been high for over 1.33ms, revert to idle
+		// channel has been high for over 1.13ms, revert to idle
 		state = IDLE;
 	} else {
-		// channel has been low for over 1.33ms, collision detected
+		// channel has been low for over 1.13ms, collision detected
 		state = COLLISION;
 	}
 }
