@@ -59,7 +59,8 @@ void TIM3_IRQHandler(void)
 {
 	// Clear interrupt flag
 	tim3->SR = 0;
-	short channel = gpioa->IDR[6];
+	int channel = (gpioa->IDR)&0x40; // Mask for bit 6 (PA6)
+	channel = channel >> 6;          // Right shift to position 0
 	if(channel == 1){
 		// channel has been high for over 1.33ms, revert to idle
 		state = IDLE;
