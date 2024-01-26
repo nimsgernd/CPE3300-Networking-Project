@@ -54,8 +54,17 @@ void monitor_init(void)
 }
 
 
-
+// Timer 3 interrupt fires when the timer is active for over 1.33ms
 void TIM3_IRQHandler(void)
 {
-
+	// Clear interrupt flag
+	tim3->SR = 0;
+	short channel = gpioa->IDR[6];
+	if(channel == 1){
+		// channel has been high for over 1.33ms, revert to idle
+		state = IDLE;
+	} else {
+		// channel has been low for over 1.33ms, collision detected
+		state = COLLISION;
+	}
 }
