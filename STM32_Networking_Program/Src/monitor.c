@@ -54,7 +54,7 @@ void monitor_init(void)
 }
 
 
-// Timer 3 interrupt fires when the timer is active for over 1.`3ms
+// Timer 3 interrupt fires when the timer is active for over 1.13ms
 void TIM3_IRQHandler(void)
 {
 	// Clear interrupt flag
