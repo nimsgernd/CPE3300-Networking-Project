@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "monitor.h"
 #include "gpio.h"
+#include "led.h"
 
 
 /**
@@ -15,8 +16,17 @@ static volatile uint32_t* const nvic_iser0 = (uint32_t*)NVIC_BASE;
 static volatile GPIO* const gpioa = (GPIO*)GPIOA_BASE;
 
 /* File variables and constants*/
+#define IDLE_LED_STATE 		(int) 0b1000000000 // Left most LED value
+#define BUSY_LED_STATE 		(int) 0b0100000000 // Second to left LED value
+#define COLLISION_LED_STATE (int) 0b0010000000 // Third to left LED value
+#define ERROR_LED_STATE		(int) 0b1111111111 // ALL LED value
+
 static enum State state = IDLE; // Current state
 
+/**
+ * @brief
+ *
+ */
 void monitor_init(void)
 {
     // Enable clock for GPIOA
@@ -56,8 +66,45 @@ void monitor_init(void)
     tim3->CR1 |= CEN;
 }
 
+/**
+ * @brief
+ *
+ */
+void monitor(void)
+{
+	switch(state)
+	{
+		/* Idle */
+		case IDLE:
+		{
+			led_enable(IDLE_LED_STATE); // Enables left most LED
+		} break;
+
+		/* Busy */
+		case BUSY:
+		{
+			led_enable(BUSY_LED_STATE); // Enables second to left LED
+		} break;
+
+		/* Collision */
+		case COLLISION:
+		{
+			led_enable(COLLISION_LED_STATE); // Enables third to left LED
+		} break;
+
+		/* Error */
+		default:
+		{
+			led_enable(ERROR_LED_STATE); // Enables all LEDs
+		}
+	}
+}
 
 // Timer 3 interrupt fires when the timer is active for over 1.13ms
+/**
+ * @brief
+ *
+ */
 void TIM3_IRQHandler(void)
 {
 	// Clear interrupt flag

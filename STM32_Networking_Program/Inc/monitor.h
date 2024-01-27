@@ -2,6 +2,7 @@
 #define MONITOR_H_
 
 void monitor_init(void);
+void monitor(void);
 
 enum State 
 {
