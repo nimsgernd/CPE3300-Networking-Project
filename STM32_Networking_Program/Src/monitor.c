@@ -46,6 +46,9 @@ void monitor_init(void)
     // Set the direction of the input capture (rising edge, falling edge, or both)
     tim3->CCER |= CC1P | CC1NP; // Rising edge
 
+    // Load the capture compare register with a value of 1.13ms (for TOC)
+    //tim3->CCR1 = 0x2C240;
+	
     // Enable the interrupt on capture compare
     tim3->DIER |= CC1IE;
 
