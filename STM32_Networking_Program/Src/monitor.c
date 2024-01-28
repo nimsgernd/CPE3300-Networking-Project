@@ -1,30 +1,63 @@
-#include <stdlib.h>
-#include <stdint.h>
-#include "monitor.h"
-#include "gpio.h"
-#include "led.h"
-
+/**
+ ******************************************************************************
+ * @file	: monitor.c
+ * @authors	: Zack Kohlman		<kohlmanz@msoe.edu>
+ *			: Jack Maki			<makij@msoe.edu>
+ *			: Daniel Nimsgern	<nimsgern@msoe.edu>
+ * 			:
+ * @brief	: Functions for initializing a network monitoring process and
+ * 			: updating status LEDs.
+ ******************************************************************************
+ */
 
 /**
  * IMPORTANT: INPUT SIGNAL ASSUMED TO BE ON ARDUINO HEADER/PIN PA_6!!!!
 */
 
-/* Addresses*/
-static volatile TIMER* const tim3 = (TIMER*)TIM3_BASE;
-static volatile RCC* const rcc = (RCC*)RCC_BASE;
-static volatile uint32_t* const nvic_iser0 = (uint32_t*)NVIC_BASE;
-static volatile GPIO* const gpioa = (GPIO*)GPIOA_BASE;
+/*
+ ******************************************************************************
+ * Includes
+ ******************************************************************************
+ */
 
-/* File variables and constants*/
+// Library
+#include <stdlib.h>
+#include <stdint.h>
+
+// Project
+#include "monitor.h"
+#include "gpio.h"
+#include "led.h"
+
+/*
+ ******************************************************************************
+ * Variables
+ ******************************************************************************
+ */
+
+// Definitions
 #define IDLE_LED_STATE 		(int) 0b1000000000 // Left most LED value
 #define BUSY_LED_STATE 		(int) 0b0100000000 // Second to left LED value
 #define COLLISION_LED_STATE (int) 0b0010000000 // Third to left LED value
 #define ERROR_LED_STATE		(int) 0b1111111111 // ALL LED value
 
+// Addresses
+static volatile TIMER* const tim3 = (TIMER*)TIM3_BASE;
+static volatile RCC* const rcc = (RCC*)RCC_BASE;
+static volatile uint32_t* const nvic_iser0 = (uint32_t*)NVIC_BASE;
+static volatile GPIO* const gpioa = (GPIO*)GPIOA_BASE;
+
+// State
 static enum State state = IDLE; // Current state
 
+/*
+ ******************************************************************************
+ * Function Definitions
+ ******************************************************************************
+ */
+
 /**
- * @brief
+ * @brief	Initializes the monitoring program.
  *
  */
 void monitor_init(void)
@@ -67,7 +100,7 @@ void monitor_init(void)
 }
 
 /**
- * @brief
+ * @brief	Updates status LEDs based on state.
  *
  */
 void monitor(void)
@@ -102,7 +135,8 @@ void monitor(void)
 
 // Timer 3 interrupt fires when the timer is active for over 1.13ms
 /**
- * @brief
+ * @brief	Interrupt service routine to monitor the network line state using
+ * 			timer 3 with a time out of 1.13ms.
  *
  */
 void TIM3_IRQHandler(void)

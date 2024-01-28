@@ -1,16 +1,50 @@
+/**
+ ******************************************************************************
+ * @file	: led.c
+ * @authors	: Functions by	Zack Kohlman	<kohlmanz@msoe.edu>
+ * 			: Comments by	Daniel Nimsgern	<nimsgernd@msoe.edu>
+ *			:
+ * @brief	: Functions for initializing and controlling the LED bar on the CE
+ * 			: development board.
+ ******************************************************************************
+ */
+
+/*
+ ******************************************************************************
+ * Includes
+ ******************************************************************************
+ */
+
+// Library
 #include <stdio.h>
 #include <stdlib.h>
+
+// Project
 #include "gpio.h"
 #include "led.h"
 
-/*Addresses*/
+/*
+ ******************************************************************************
+ * Variables
+ ******************************************************************************
+ */
+
+// Addresses
 static volatile GPIO* const gpiob = (GPIO*)GPIOB_BASE;
 static volatile RCC* const rcc = (RCC*)RCC_BASE;
 
+/*
+ ******************************************************************************
+ * Function Definitions
+ ******************************************************************************
+ */
 
 /**
- * Turns on the LED corresponding with the number. 1 = right most
-*/
+ * @brief	Turns on the LED corresponding with the number (1 = right most).
+ *
+ * @param	number - A integer value corresponding to the binary values
+ * 					 0b0000000000 to 0b1111111111.
+ */
 void led_enable(int number)
 {
     // Clear all old led bits
@@ -31,10 +65,8 @@ void led_enable(int number)
 }
 
 /**
- * @brief Initializes the LED.
+ * @brief	Initializes the GPIO to utilize the LED bar.
  * 
- * This function enables the GPIOB clock and configures the GPIOB pins
- * connected to the LED as output pins.
  */
 void led_init(void)
 {

@@ -1,23 +1,25 @@
 /**
-  ******************************************************************************
-  * @file    gpio.h
-  * @author  Zachary Kohlman
-  * @email	 kohlmanz@msoe.edu
-  * @version V1.0
-  * @brief   Default main function.
-  * Description: This header file defines various structs used in tone.c along
-  * with the methods used.
-  ******************************************************************************
-*/
+ ******************************************************************************
+ * @file	: gpio.h
+ * @authors	: File created by	  Zachary Kohlman	<kohlmanz@msoe.edu>
+ * 			: Updated Comments by Daniel Nimsgern <nimsgernd@msoe.edu>
+ * @version	: V1.1
+ * @brief	: This header file defines various structs used in controlling GPIO
+ * 			: and other component registers.
+ ******************************************************************************
+ */
 
 #ifndef GPIO_H_
 #define GPIO_H_
 
 #include <stdint.h>
 
-/**********************************************************************************************
- *                                      REG ADDRESSES                                         *
- **********************************************************************************************/
+/*
+ ******************************************************************************
+ * REG ADDRESSES
+ ******************************************************************************
+ */
+
 #define RCC_BASE 0x40023800
 #define GPIOB_BASE 0x40020400
 #define GPIOA_BASE 0x40020000
@@ -26,22 +28,25 @@
 #define NVIC_BASE 0xE000E100
 #define SYSCFG_EXTICR2_BASE 0x4001380C
 
-/**********************************************************************************************
- *                                          TIM BITS                                          *
- **********************************************************************************************/
-// Clock enable bit in TIM control register (CR) [0 = disabled, 1 = enabled]
-#define CEN 1<<0
+/*
+ ******************************************************************************
+ * TIM BITS
+ ******************************************************************************
+ */
 
-// RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4) [0 = disabled, 1 = enabled]
-#define TIM3EN 1 << 1
-#define TIM4EN 1 << 2
+// Clock enable bit in TIM control register (CR)
+#define CEN 1<<0	// [0 = disabled, 1 = enabled]
 
-// NVIC position of 16-bit timers (TIM3 and TIM4) [0 = disabled, 1 = enabled]
-#define TIM3_POS 1 << 29
-#define TIM4_POS 1 << 30
+// RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4)
+#define TIM3EN 1 << 1	// [0 = disabled, 1 = enabled]
+#define TIM4EN 1 << 2	// [0 = disabled, 1 = enabled]
 
-// Capture/Compare 1 interrupt enable for channel 1 [0 = disabled, 1 = enabled]
-#define CC1IE 1<<1
+// NVIC position of 16-bit timers (TIM3 and TIM4)
+#define TIM3_POS 1 << 29	// [0 = disabled, 1 = enabled]
+#define TIM4_POS 1 << 30	// [0 = disabled, 1 = enabled]
+
+// Capture/Compare 1 interrupt enable for channel 1
+#define CC1IE 1<<1	// [0 = disabled, 1 = enabled]
 
 // Status Register Interrupt Pending Flag for channel 1
 // This bit is set by hardware on a capture. It is cleared by software or by
@@ -51,8 +56,8 @@
 // CCMR to configure TIM3 to Timer Input Capture TIC
 #define CC1S 0b10
 
-// Capture Compare 1 Enable bit in CCER [0  = disabled, 1 = enabled]
-#define CC1E 1<<0
+// Capture Compare 1 Enable bit in CCER
+#define CC1E 1<<0	// [0  = disabled, 1 = enabled]
 
 // Capture Compare 1 Polarity for Capture/Compare on high
 #define CC1P 1 << 1
@@ -60,32 +65,38 @@
 // Capture Compare 1 Complimentary output enable
 #define CC1NP 1 << 3
 
+/*
+ ******************************************************************************
+ * GPIO BITS
+ ******************************************************************************
+ */
 
+// RCC AHB1 peripheral clock enable register GPIO Enable bits
+#define GPIOAEN 1<<0	// [0  = disabled, 1 = enabled]
+#define GPIOBEN 1<<1	// [0  = disabled, 1 = enabled]
 
-/**********************************************************************************************
- *                                          GPIO BITS                                         *
- **********************************************************************************************/
-// RCC AHB1 peripheral clock enable register GPIO Enable bits [0  = disabled, 1 = enaabled]
-#define GPIOAEN 1<<0
-#define GPIOBEN 1<<1
-
-// Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL for TIC/TOC. 
+// Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
+// for TIC/TOC.
 // [0 = disabled, 1 = enabled]
 #define AF2 0b0010
 #define AFRL_PA6_AF2 AF2 << 6
 #define GPIOA_PA6_MODER_AF AF2 << 12
 
-/**********************************************************************************************
- *                                          EXTI BITS                                         *
- **********************************************************************************************/
+/*
+ ******************************************************************************
+ * EXTI BITS
+ ******************************************************************************
+ */
+
 // EXTICR2 used for lines 4-7 corresponding with PA4-PA7
 #define SYSCFG_PA6_EXTICR2 0b0000
 
+/*
+ ******************************************************************************
+ * CONTROLLER STRUCTS
+ ******************************************************************************
+ */
 
-
-/**********************************************************************************************
- *                                   CONTROLLER STRUCTS                                       *
- **********************************************************************************************/
 typedef struct
 {
     volatile uint32_t CR;
