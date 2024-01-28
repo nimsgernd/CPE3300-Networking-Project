@@ -28,6 +28,7 @@
 #include "monitor.h"
 #include "gpio.h"
 #include "led.h"
+#include "delay.h"
 
 /*
  ******************************************************************************
@@ -36,7 +37,7 @@
  */
 
 // Definitions
-#define IDLE_LED_STATE 		(int) 0b1000000000 // Left most LED value
+#define IDLE_LED_STATE 	(int) 0b1000000000 // Left most LED value
 #define BUSY_LED_STATE 		(int) 0b0100000000 // Second to left LED value
 #define COLLISION_LED_STATE (int) 0b0010000000 // Third to left LED value
 #define ERROR_LED_STATE		(int) 0b1111111111 // ALL LED value
@@ -46,9 +47,18 @@ static volatile TIMER* const tim3 = (TIMER*)TIM3_BASE;
 static volatile RCC* const rcc = (RCC*)RCC_BASE;
 static volatile uint32_t* const nvic_iser0 = (uint32_t*)NVIC_BASE;
 static volatile GPIO* const gpioa = (GPIO*)GPIOA_BASE;
+static volatile RTC* const rtc = (RTC*)RTC_BASE;
 
 // State
 static enum State state = IDLE; // Current state
+
+/*
+ ******************************************************************************
+ * Function Prototypes
+ ******************************************************************************
+ */
+
+static void post_collision_delay(void);
 
 /*
  ******************************************************************************
@@ -70,6 +80,15 @@ void monitor_init(void)
 
     // For additional timer, un-comment the following line for TIM4
     // rcc->APB1ENR |= TIM4EN; 
+
+    // Enable internal low speed oscillator
+    rcc->CSR |= LSION;
+
+    // Select internal low speed oscillator for RTC
+    rcc->BDCR |= RTCSEL_LSI;
+
+    // Enable real time clock
+    rcc->BDCR |= RTCEN;
 
     // Set PA6 to alternate function for TIC/TOC
     gpioa->MODER |= GPIOA_PA6_MODER_AF;
@@ -105,6 +124,7 @@ void monitor_init(void)
  */
 void monitor(void)
 {
+//	post_collision_delay();
 	switch(state)
 	{
 		/* Idle */
@@ -131,6 +151,23 @@ void monitor(void)
 			led_enable(ERROR_LED_STATE); // Enables all LEDs
 		}
 	}
+}
+
+/**
+ * @brief	Creates a randomized delay based on the real time clock then stops
+ * 			process for that amount of time.
+ *
+ */
+void post_collision_delay(void)
+{
+	// Read lower 16 bits of RTC time register
+	uint32_t RT = rtc->TR & 0x0000FFFF;
+
+	// Scale RT value by the scaler
+	uint32_t microSecDelay = RT * RT_TO_MICROSEC_SCALAR;
+
+	// Delay by this randomized time
+	delay_us(microSecDelay);
 }
 
 // Timer 3 interrupt fires when the timer is active for over 1.13ms

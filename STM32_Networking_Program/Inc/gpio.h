@@ -20,12 +20,13 @@
  ******************************************************************************
  */
 
-#define RCC_BASE 0x40023800
-#define GPIOB_BASE 0x40020400
-#define GPIOA_BASE 0x40020000
-#define TIM3_BASE 0x40000400
-#define TIM4_BASE 0x40000800
-#define NVIC_BASE 0xE000E100
+#define RCC_BASE	0x40023800
+#define GPIOB_BASE	0x40020400
+#define GPIOA_BASE	0x40020000
+#define TIM3_BASE	0x40000400
+#define TIM4_BASE	0x40000800
+#define RTC_BASE	0x40002800
+#define NVIC_BASE	0xE000E100
 #define SYSCFG_EXTICR2_BASE 0x4001380C
 
 /*
@@ -90,6 +91,25 @@
 
 // EXTICR2 used for lines 4-7 corresponding with PA4-PA7
 #define SYSCFG_PA6_EXTICR2 0b0000
+
+/*
+ ******************************************************************************
+ * LSI Bits
+ ******************************************************************************
+ */
+
+#define LSION 0
+
+/*
+ ******************************************************************************
+ * RTC Bits
+ ******************************************************************************
+ */
+
+#define RTCEN 1 << 15
+#define RTCSEL_LSE 0b01 << 8
+#define RTCSEL_LSI 0b10 << 8
+#define RTCSEL_HSE 0b11 << 8
 
 /*
  ******************************************************************************
@@ -173,6 +193,28 @@ typedef struct{
 	volatile uint32_t TIM2_OR;
 	volatile uint32_t TIM5_OR;
 }TIMER;
+
+typedef struct{
+	volatile uint32_t TR;
+	volatile uint32_t DR;
+	volatile uint32_t CR;
+	volatile uint32_t ISR;
+	volatile uint32_t PRER;
+	volatile uint32_t WUTR;
+	volatile uint32_t CALIBR;
+	volatile uint32_t ALRMAR;
+	volatile uint32_t ALRMBR;
+	volatile uint32_t WPR;
+	const uint32_t SSR;
+	volatile uint32_t SHIFTR;
+	const uint32_t TSTR;
+	const uint32_t TSDR;
+	const uint32_t TSSSR;
+	volatile uint32_t CALR;
+	volatile uint32_t TAFCR;
+	volatile uint32_t ALRMASSR;
+	volatile uint32_t ALRMBSSR;
+}RTC;
 
 typedef struct{
 	volatile uint32_t MEMRMP;
