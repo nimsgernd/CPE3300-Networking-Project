@@ -31,12 +31,11 @@
  */
 
 // Library
-#include <stdint.h>
 
 // Project
-#include "monitor.h"
-#include "led.h"
 #include "delay.h"
+#include "led.h"
+#include "monitor.h"
 
 /*
  ******************************************************************************
