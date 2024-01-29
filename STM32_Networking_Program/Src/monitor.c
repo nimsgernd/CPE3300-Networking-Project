@@ -185,12 +185,12 @@ void TIM3_IRQHandler(void)
 	// Clear interrupt flag
 	tim3->SR = 0;
 
-	if (TIM3->SR & CC1IF) // if the interrupt source is a capture event on channel 1
+	if (tim3->SR & CC1IF) // if the interrupt source is a capture event on channel 1
 	{
 		// Timer Ticks to Microseconds conversion
-		uint32_t ticks = TIM3->CCR1;									   // get the number of ticks
+		uint32_t ticks = tim3->CCR1;									   // get the number of ticks
 		uint32_t time_in_microseconds = (ticks / F_CPU) * 1e6;			   // Time_in_us = (TimerTicks/Timer Frequency) * 1,000,000
-		uint32_t current_edge_time = TIM3->CCR1;						   // read the captured time
+		uint32_t current_edge_time = time_in_microseconds;						   // read the captured time
 		uint32_t time_difference = current_edge_time - previous_edge_time; // Time since last edge
 
 		// Determine edge type (rising/falling)
@@ -219,5 +219,5 @@ void TIM3_IRQHandler(void)
 		}
 		previous_edge_time = current_edge_time; // update the time of the previous edge
 	}
-	TIM3->SR &= ~TIM_SR_CC1IF; // clear the interrupt flag
+	tim3->SR &= ~CC1IF; // clear the interrupt flag
 }

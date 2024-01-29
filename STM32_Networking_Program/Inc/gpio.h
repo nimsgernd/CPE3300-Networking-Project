@@ -49,11 +49,6 @@
 // Capture/Compare 1 interrupt enable for channel 1
 #define CC1IE 1<<1	// [0 = disabled, 1 = enabled]
 
-// Status Register Interrupt Pending Flag for channel 1
-// This bit is set by hardware on a capture. It is cleared by software or by
-// reading the TIMx_CCR1 register
-#define TIMx_SR_CC1F 1<<1
-
 // CCMR to configure TIM3 to Timer Input Capture TIC
 #define CC1S 1 << 0	// [0 = CC1 channel is configured as output, 1 = CC1 channel is configured as input, IC1 is mapped on TI1]
 
@@ -67,6 +62,8 @@
 #define CC1NP 1 << 0
 
 // Capture Compare 1 Interrupt Flag
+// This bit is set by hardware on a capture. It is cleared by software or by
+// reading the TIMx_CCR1 register
 #define CC1IF 1 << 0 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
 
 /*
