@@ -105,7 +105,7 @@ void monitor_init(void)
 	tim2->DIER |= CC1IE;
 
     // Set the auto-reload value to the maximum for a 16-bit counter
-    tim3->ARR = MAX_16;
+    tim2->ARR = MAX_16;
 
 	// Enable the counter
 	tim2->CR1 |= CEN;
@@ -177,16 +177,16 @@ void post_collision_delay(void)
  */
 void TIM3_IRQHandler(void)
 {
-	if (tim3->SR & CC1IF) // if the interrupt source is a capture event on channel 1
+	if (tim2->SR & CC1IF) // if the interrupt source is a capture event on channel 1
 	{
 		// Timer Ticks to Microseconds conversion
-		uint32_t ticks = tim3->CCR1;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
+		uint32_t ticks = tim2->CCR1;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
 		uint32_t time_in_microseconds = (ticks / F_CPU) * 1e6;			   // Time_in_us = (TimerTicks/Timer Frequency) * 1,000,000
 		uint32_t current_edge_time = time_in_microseconds;				   // Record the captured time
 		uint32_t time_difference = current_edge_time - previous_edge_time; // Time since last edge
 
 		// Determine edge type (rising/falling)
-		int channel = (gpioa->IDR & GPIO_IDR_PA6); // Mask for bit 6 (PA6). [1 = PA6 is rising edge, 0 = PA6 is falling edge]
+		int channel = (gpioa->IDR & GPIO_IDR_PA15); // Mask for bit 6 (PA6). [1 = PA6 is rising edge, 0 = PA6 is falling edge]
 		//channel = channel >> 6;					   // Right shift to position 0
 
 
@@ -223,5 +223,5 @@ void TIM3_IRQHandler(void)
 		}
 		previous_edge_time = current_edge_time; // update the time of the previous edge
 	}
-	tim3->SR &= ~CC1IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 1
+	tim2->SR &= ~CC1IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 1
 }
