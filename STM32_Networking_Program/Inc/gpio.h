@@ -66,6 +66,9 @@
 // Capture Compare 1 Complimentary output enable
 #define CC1NP 1 << 0
 
+// Capture Compare 1 Interrupt Flag
+#define CC1IF 1 << 0 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
+
 /*
  ******************************************************************************
  * GPIO BITS
@@ -75,6 +78,8 @@
 // RCC AHB1 peripheral clock enable register GPIO Enable bits
 #define GPIOAEN 1<<0	// [0  = disabled, 1 = enabled]
 #define GPIOBEN 1<<1	// [0  = disabled, 1 = enabled]
+
+#define GPIO_IDR_PA6 1<<6 // GPIO_IDR PA6 bit
 
 // Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
 // for TIC/TOC.

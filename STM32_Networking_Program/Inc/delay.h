@@ -13,6 +13,9 @@
 
 #include <inttypes.h>
 
+// CPU Frequency in Hz
+#define F_CPU 16000000UL
+
 /*
  ******************************************************************************
  * SysTick Values
