@@ -21,14 +21,14 @@
  */
 
 // Library
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 // Project
-#include "monitor.h"
+#include "delay.h"
 #include "gpio.h"
 #include "led.h"
-#include "delay.h"
+#include "monitor.h"
 
 /*
  ******************************************************************************
