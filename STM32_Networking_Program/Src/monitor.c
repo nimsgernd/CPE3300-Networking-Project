@@ -204,10 +204,11 @@ void TIM3_IRQHandler(void)
 		}
 		else if (state == BUSY)
 		{
+			// To prevent race condition at exactly 1.13 ms, keep in busy
 			/*TIMEOUT EVENTS*/
 			// If edge_time > 1.13 ms and falling edge, collision
 			// If edge_time > 1.13 ms and rising edge, idle
-			if (time_difference >= DELAY_TIME_US)
+			if (time_difference > DELAY_TIME_US)
 			{
 				state = channel ? IDLE : COLLISION;
 			}
