@@ -25,6 +25,7 @@
 #define GPIOA_BASE	0x40020000
 #define TIM3_BASE	0x40000400
 #define TIM4_BASE	0x40000800
+#define TIM14_BASE	0x40002000
 #define RTC_BASE	0x40002800
 #define NVIC_BASE	0xE000E100
 #define SYSCFG_EXTICR2_BASE 0x4001380C
@@ -41,6 +42,7 @@
 // RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4)
 #define TIM3EN 1 << 1	// [0 = disabled, 1 = enabled]
 #define TIM4EN 1 << 2	// [0 = disabled, 1 = enabled]
+#define TIM14EN 1 << 8	// [0 = disabled, 1 = enabled]
 
 // NVIC position of 16-bit timers (TIM3 and TIM4)
 #define TIM3_POS 1 << 29	// [0 = disabled, 1 = enabled]
@@ -194,7 +196,31 @@ typedef struct{
 	volatile uint32_t DMAR;
 	volatile uint32_t TIM2_OR;
 	volatile uint32_t TIM5_OR;
-}TIMER;
+}GPTIM16B32B;
+
+typedef struct{
+	volatile uint32_t CR1;
+	const uint32_t RESERVED;
+	volatile uint32_t SMCR;
+	volatile uint32_t DIER;
+	volatile uint32_t SR;
+	volatile uint32_t EGR;
+	volatile uint32_t CCMR1;
+	const uint32_t RESERVED1;
+	volatile uint32_t CCER;
+	volatile uint32_t CNT;
+	volatile uint32_t PSC;
+	volatile uint32_t ARR;
+	const uint32_t RESERVED2;
+	volatile uint32_t CCR1;
+	const uint32_t RESERVED3;
+	const uint32_t RESERVED4;
+	const uint32_t RESERVED5;
+	const uint32_t RESERVED6;
+	const uint32_t RESERVED7;
+	const uint32_t RESERVED8;
+	volatile uint32_t OR;
+}GPTIM16B;
 
 typedef struct{
 	volatile uint32_t TR;

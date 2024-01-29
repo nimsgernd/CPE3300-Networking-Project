@@ -44,11 +44,11 @@ volatile uint32_t previous_edge_time = 0; // Time of previous edge
 #define ERROR_LED_STATE (int)0b1111111111	  // ALL LED value
 
 // Addresses
-static volatile TIMER *const tim3 = (TIMER *)TIM3_BASE;
+static volatile GPTIM16B32B *const tim3 = (GPTIM16B32B *)TIM3_BASE;
+static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile uint32_t *const nvic_iser0 = (uint32_t *)NVIC_BASE;
 static volatile GPIO *const gpioa = (GPIO *)GPIOA_BASE;
-static volatile RTC *const rtc = (RTC *)RTC_BASE;
 
 // State
 static enum State state = IDLE; // Current state
@@ -79,17 +79,11 @@ void monitor_init(void)
 	// Enable clock for tim3
 	rcc->APB1ENR |= TIM3EN;
 
+	// Enable clock for tim14
+	rcc->APB1ENR |= TIM14EN;
+
 	// For additional timer, un-comment the following line for TIM4
 	// rcc->APB1ENR |= TIM4EN;
-
-	// Enable internal low speed oscillator
-	rcc->CSR |= LSION;
-
-	// Select internal low speed oscillator for RTC
-	rcc->BDCR |= RTCSEL_LSI;
-
-	// Enable real time clock
-	rcc->BDCR |= RTCEN;
 
 	// Set PA6 to alternate function for TIC/TOC
 	gpioa->MODER |= GPIOA_PA6_MODER_AF;
@@ -117,6 +111,9 @@ void monitor_init(void)
 
 	// Enable the counter
 	tim3->CR1 |= CEN;
+
+	// Enable timer
+	tim14->CR1 |= CEN;
 }
 
 /**
@@ -125,7 +122,6 @@ void monitor_init(void)
  */
 void monitor(void)
 {
-	//	post_collision_delay();
 	switch (state)
 	{
 	/* Idle */
@@ -146,6 +142,7 @@ void monitor(void)
 	case COLLISION:
 	{
 		led_enable(COLLISION_LED_STATE); // Enables third to left LED
+		post_collision_delay();
 	}
 	break;
 
@@ -158,17 +155,17 @@ void monitor(void)
 }
 
 /**
- * @brief	Creates a randomized delay based on the real time clock then stops
- * 			process for that amount of time.
+ * @brief	Creates a randomized delay based on timer 14 which is acting as a
+ * 			free running counter.
  *
  */
 void post_collision_delay(void)
 {
-	// Read lower 16 bits of RTC time register
-	uint32_t RT = rtc->TR & 0x0000FFFF;
+	// Reads count register from free running counter
+	uint32_t count = tim14->CNT;
 
-	// Scale RT value by the scaler
-	uint32_t microSecDelay = RT * RT_TO_MICROSEC_SCALAR;
+	// Scale count value by the scaler
+	uint32_t microSecDelay = count * TIM_TO_MICROSEC_SCALAR;
 
 	// Delay by this randomized time
 	delay_us(microSecDelay);

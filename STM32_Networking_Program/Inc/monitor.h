@@ -18,7 +18,7 @@
  */
 
 #define RT_MAX_VALUE 			0x7F7F7F
-#define RT_TO_MICROSEC_SCALAR	30
+#define TIM_TO_MICROSEC_SCALAR	15
 
 #define DELAY_TIME_US 1300 // 1.3 ms
 
