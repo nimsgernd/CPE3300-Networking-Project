@@ -198,13 +198,23 @@ void TIM3_IRQHandler(void)
 		}
 		else if (state == BUSY)
 		{
-			// To prevent race condition at exactly 1.13 ms, keep in busy
+			// To prevent race condition at edges, uses < and > to keep in BUSY state
 			/*TIMEOUT EVENTS*/
-			// If edge_time > 1.13 ms and falling edge, collision
-			// If edge_time > 1.13 ms and rising edge, idle
-			if (time_difference > DELAY_TIME_US)
+				// If 1.113ms >= edge_time >= 1.188ms and rising edge, idle
+				// If 1.04ms >= edge_time >= 1.14ms and falling edge, collision
+				// If edge_time > 1.13 ms and rising edge, idle
+			if(channel)
 			{
-				state = channel ? IDLE : COLLISION;
+				if(time_difference > IDLE_MOE_LOW_US && time_difference < IDLE_MOE_HIGH_US)
+				{
+					state = IDLE;
+				}
+			} else
+			{
+				if(time_difference > COLLISION_MOE_LOW_US && time_difference < COLLISION_MOE_HIGH_US)
+				{
+					state = COLLISION;
+				}
 			}
 		}
 		else
