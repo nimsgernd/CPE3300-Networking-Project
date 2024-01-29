@@ -55,24 +55,30 @@
 #define TIM2_POS 1 << 28	// [0 = disabled, 1 = enabled]
 
 // Capture/Compare 1 interrupt enable for channel 1
-#define CC1IE 1<<1	// [0 = disabled, 1 = enabled]
+#define CC1IE 1 << 1	// [0 = disabled, 1 = enabled]
+#define CC2IE 1 << 2
 
 // CCMR to configure TIM3 to Timer Input Capture TIC
 #define CC1S 1 << 0	// [0 = CC1 channel is configured as output, 1 = CC1 channel is configured as input, IC1 is mapped on TI1]
+#define CC2S 0b10 << 8
 
 // Capture Compare 1 Enable bit in CCER
-#define CC1E 1<<0	// [0  = disabled, 1 = enabled]
+#define CC1E 1 << 0	// [0  = disabled, 1 = enabled]
+#define CC2E 1 << 4
 
 // Capture Compare 1 Polarity for Capture/Compare on high
 #define CC1P 1 << 0
+#define CC2P 1 << 5
 
 // Capture Compare 1 Complimentary output enable
 #define CC1NP 1 << 0
+#define CC2NP 1 << 7
 
 // Capture Compare 1 Interrupt Flag
 // This bit is set by hardware on a capture. It is cleared by software or by
 // reading the TIMx_CCR1 register
-#define CC1IF 1 << 0 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
+#define CC1IF 1 << 1 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
+#define CC2IF 1 << 2
 
 /*
  ******************************************************************************
@@ -84,14 +90,41 @@
 #define GPIOAEN 1<<0	// [0  = disabled, 1 = enabled]
 #define GPIOBEN 1<<1	// [0  = disabled, 1 = enabled]
 
-#define GPIO_IDR_PA15 1<<15 // GPIO_IDR PA15 bit
+#define GPIO_IDR_Px0	1 << 0
+#define GPIO_IDR_Px1	1 << 1
+#define GPIO_IDR_Px2	1 << 2
+#define GPIO_IDR_Px3	1 << 3
+#define GPIO_IDR_Px4	1 << 4
+#define GPIO_IDR_Px5	1 << 5
+#define GPIO_IDR_Px6	1 << 6
+#define GPIO_IDR_Px7	1 << 7
+#define GPIO_IDR_Px8	1 << 8
+#define GPIO_IDR_Px9	1 << 9
+#define GPIO_IDR_Px10	1 << 10
+#define GPIO_IDR_Px11	1 << 11
+#define GPIO_IDR_Px12	1 << 12
+#define GPIO_IDR_Px13	1 << 13
+#define GPIO_IDR_Px14	1 << 14
+#define GPIO_IDR_Px15	1 << 15 // GPIO_IDR PA15 bit
+
+// GPIO MODER SETTINGS
+#define MODER_IN	0b00
+#define MODER_OUT	0b01
+#define MODER_AF	0b10
+#define MODER_ALOG	0b11
+
+#define GPIO_Px3_MODER_AF MODER_AF << 6
+#define GPIO_Px15_MODER_AF MODER_AF << 30
 
 // Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
 // for TIC/TOC.
 // [0 = disabled, 1 = enabled]
-#define AF1 0b0001
-#define AFRH_PA15_AF1 AF1 << 28
-#define GPIOA_PA15_MODER_AF AF1 << 30
+#define AFRx_1			0b0001
+
+#define AFRL_Px3_AF1	AFRx_1 << 12
+#define AFRH_Px15_AF1	AFRx_1 << 28
+
+
 
 /*
  ******************************************************************************

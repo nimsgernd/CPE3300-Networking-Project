@@ -49,7 +49,7 @@ static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile uint32_t *const nvic_iser0 = (uint32_t *)NVIC_BASE;
-static volatile GPIO *const gpioa = (GPIO *)GPIOA_BASE;
+static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 
 // State
 static enum State state = IDLE; // Current state
@@ -75,7 +75,7 @@ static void post_collision_delay(void);
 void monitor_init(void)
 {
 	// Enable clock for GPIOA
-	rcc->AHB1ENR |= GPIOAEN;
+	rcc->AHB1ENR |= GPIOBEN;
 
 	// Enable clock for tim3
 	rcc->APB1ENR |= TIM2EN;
@@ -84,25 +84,25 @@ void monitor_init(void)
 	rcc->APB1ENR |= TIM14EN;
 
 	// Set PA6 to alternate function for TIC/TOC
-	gpioa->MODER |= GPIOA_PA15_MODER_AF;
+	gpiob->MODER |= GPIO_Px3_MODER_AF;
 
 	// Set PA6 to alternate function in Alternate Function Register Low (for GPIO pins 0 - 7)
-	gpioa->AFRL = AF1 << AFRH_PA15_AF1;
+	gpiob->AFRL = AFRL_Px3_AF1;
 
 	// Open interrupt for TIM3
 	*nvic_iser0 = TIM2_POS;
 
 	// Set to TIC in compare compare mode register 1 in CC
-	tim2->CCMR1 = CC1S;
+	tim2->CCMR1 = CC2S;
 
 	// Enable the capture compare for the channel
-	tim2->CCER |= CC1E;
+	tim2->CCER |= CC2E;
 
 	// Set the direction of the input capture (rising edge, falling edge, or both)
-	tim2->CCER |= CC1P | CC1NP; // Trigger on rising (CC1P) + falling edges (CC1NP)
+	tim2->CCER |= CC2P | CC2NP; // Trigger on rising (CC1P) + falling edges (CC1NP)
 
 	// Enable the interrupt on capture compare
-	tim2->DIER |= CC1IE;
+	tim2->DIER |= CC2IE;
 
     // Set the auto-reload value to the maximum for a 16-bit counter
     tim2->ARR = MAX_16;
@@ -177,7 +177,7 @@ void post_collision_delay(void)
  */
 void TIM3_IRQHandler(void)
 {
-	if (tim2->SR & CC1IF) // if the interrupt source is a capture event on channel 1
+	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 1
 	{
 		// Timer Ticks to Microseconds conversion
 		uint32_t ticks = tim2->CCR1;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
@@ -186,7 +186,7 @@ void TIM3_IRQHandler(void)
 		uint32_t time_difference = current_edge_time - previous_edge_time; // Time since last edge
 
 		// Determine edge type (rising/falling)
-		int channel = (gpioa->IDR & GPIO_IDR_PA15); // Mask for bit 6 (PA6). [1 = PA6 is rising edge, 0 = PA6 is falling edge]
+		int channel = (gpiob->IDR & GPIO_IDR_Px3); // Mask for bit 6 (PA6). [1 = PA6 is rising edge, 0 = PA6 is falling edge]
 		//channel = channel >> 6;					   // Right shift to position 0
 
 
@@ -223,5 +223,5 @@ void TIM3_IRQHandler(void)
 		}
 		previous_edge_time = current_edge_time; // update the time of the previous edge
 	}
-	tim2->SR &= ~CC1IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 1
+	tim2->SR &= ~CC2IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 2
 }
