@@ -175,7 +175,7 @@ void post_collision_delay(void)
  * 			timer 3 with a time out of 1.13ms.
  *
  */
-void TIM3_IRQHandler(void)
+void TIM2_IRQHandler(void)
 {
 	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 1
 	{
