@@ -106,7 +106,7 @@ void monitor_init(void)
     tim3->CCER |= CC1E;
 
     // Set the direction of the input capture (rising edge, falling edge, or both)
-    tim3->CCER |= CC1P | CC1NP; // Rising edge
+    tim3->CCER |= CC1P | CC1NP; // Trigger on rising (CC1P) + falling edges (CC1NP)
 
     // Load the capture compare register with a value of 1.13ms (for TOC)
     //tim3->CCR1 = 0x2C240;

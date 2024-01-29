@@ -55,16 +55,16 @@
 #define TIMx_SR_CC1F 1<<1
 
 // CCMR to configure TIM3 to Timer Input Capture TIC
-#define CC1S 0b10
+#define CC1S 1 << 0	// [0 = CC1 channel is configured as output, 1 = CC1 channel is configured as input, IC1 is mapped on TI1]
 
 // Capture Compare 1 Enable bit in CCER
 #define CC1E 1<<0	// [0  = disabled, 1 = enabled]
 
 // Capture Compare 1 Polarity for Capture/Compare on high
-#define CC1P 1 << 1
+#define CC1P 1 << 0
 
 // Capture Compare 1 Complimentary output enable
-#define CC1NP 1 << 3
+#define CC1NP 1 << 0
 
 /*
  ******************************************************************************
