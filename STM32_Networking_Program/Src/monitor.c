@@ -11,7 +11,7 @@
  */
 
 /**
- * IMPORTANT: INPUT SIGNAL ASSUMED TO BE ON ARDUINO HEADER/PIN PA_6!!!!
+ * IMPORTANT: INPUT SIGNAL ASSUMED TO BE ON ARDUINO HEADER/PIN PA_15!!!!
  */
 
 /*
@@ -42,9 +42,10 @@ volatile uint32_t previous_edge_time = 0; // Time of previous edge
 #define BUSY_LED_STATE (int)0b0100000000	  // Second to left LED value
 #define COLLISION_LED_STATE (int)0b0010000000 // Third to left LED value
 #define ERROR_LED_STATE (int)0b1111111111	  // ALL LED value
+#define MAX_16 0xFFFF
 
 // Addresses
-static volatile GPTIM16B32B *const tim3 = (GPTIM16B32B *)TIM3_BASE;
+static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile uint32_t *const nvic_iser0 = (uint32_t *)NVIC_BASE;
@@ -77,40 +78,37 @@ void monitor_init(void)
 	rcc->AHB1ENR |= GPIOAEN;
 
 	// Enable clock for tim3
-	rcc->APB1ENR |= TIM3EN;
+	rcc->APB1ENR |= TIM2EN;
 
 	// Enable clock for tim14
 	rcc->APB1ENR |= TIM14EN;
 
-	// For additional timer, un-comment the following line for TIM4
-	// rcc->APB1ENR |= TIM4EN;
-
 	// Set PA6 to alternate function for TIC/TOC
-	gpioa->MODER |= GPIOA_PA6_MODER_AF;
+	gpioa->MODER |= GPIOA_PA15_MODER_AF;
 
 	// Set PA6 to alternate function in Alternate Function Register Low (for GPIO pins 0 - 7)
-	gpioa->AFRL = AF2 << AFRL_PA6_AF2;
+	gpioa->AFRL = AF1 << AFRH_PA15_AF1;
 
 	// Open interrupt for TIM3
-	*nvic_iser0 = TIM3_POS;
+	*nvic_iser0 = TIM2_POS;
 
 	// Set to TIC in compare compare mode register 1 in CC
-	tim3->CCMR1 = CC1S;
+	tim2->CCMR1 = CC1S;
 
 	// Enable the capture compare for the channel
-	tim3->CCER |= CC1E;
+	tim2->CCER |= CC1E;
 
 	// Set the direction of the input capture (rising edge, falling edge, or both)
-	tim3->CCER |= CC1P | CC1NP; // Trigger on rising (CC1P) + falling edges (CC1NP)
-
-	// Load the capture compare register with a value of 1.13ms (for TOC)
-	// tim3->CCR1 = 0x2C240;
+	tim2->CCER |= CC1P | CC1NP; // Trigger on rising (CC1P) + falling edges (CC1NP)
 
 	// Enable the interrupt on capture compare
-	tim3->DIER |= CC1IE;
+	tim2->DIER |= CC1IE;
+
+    // Set the auto-reload value to the maximum for a 16-bit counter
+    tim3->ARR = MAX_16;
 
 	// Enable the counter
-	tim3->CR1 |= CEN;
+	tim2->CR1 |= CEN;
 
 	// Enable timer
 	tim14->CR1 |= CEN;
@@ -190,6 +188,7 @@ void TIM3_IRQHandler(void)
 		// Determine edge type (rising/falling)
 		int channel = (gpioa->IDR & GPIO_IDR_PA6); // Mask for bit 6 (PA6). [1 = PA6 is rising edge, 0 = PA6 is falling edge]
 		//channel = channel >> 6;					   // Right shift to position 0
+
 
 		if (state == IDLE)
 		{

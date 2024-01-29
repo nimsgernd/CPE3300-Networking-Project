@@ -32,8 +32,7 @@
 #define RCC_BASE	0x40023800
 #define GPIOB_BASE	0x40020400
 #define GPIOA_BASE	0x40020000
-#define TIM3_BASE	0x40000400
-#define TIM4_BASE	0x40000800
+#define TIM2_BASE 	0x40000000
 #define TIM14_BASE	0x40002000
 #define RTC_BASE	0x40002800
 #define NVIC_BASE	0xE000E100
@@ -49,13 +48,11 @@
 #define CEN 1<<0	// [0 = disabled, 1 = enabled]
 
 // RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4)
-#define TIM3EN 1 << 1	// [0 = disabled, 1 = enabled]
-#define TIM4EN 1 << 2	// [0 = disabled, 1 = enabled]
+#define TIM2EN 1 << 0	// [0 = disabled, 1 = enabled]
 #define TIM14EN 1 << 8	// [0 = disabled, 1 = enabled]
 
 // NVIC position of 16-bit timers (TIM3 and TIM4)
-#define TIM3_POS 1 << 29	// [0 = disabled, 1 = enabled]
-#define TIM4_POS 1 << 30	// [0 = disabled, 1 = enabled]
+#define TIM2_POS 1 << 28	// [0 = disabled, 1 = enabled]
 
 // Capture/Compare 1 interrupt enable for channel 1
 #define CC1IE 1<<1	// [0 = disabled, 1 = enabled]
@@ -87,23 +84,14 @@
 #define GPIOAEN 1<<0	// [0  = disabled, 1 = enabled]
 #define GPIOBEN 1<<1	// [0  = disabled, 1 = enabled]
 
-#define GPIO_IDR_PA6 1<<6 // GPIO_IDR PA6 bit
+#define GPIO_IDR_PA15 1<<15 // GPIO_IDR PA15 bit
 
 // Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
 // for TIC/TOC.
 // [0 = disabled, 1 = enabled]
-#define AF2 0b0010
-#define AFRL_PA6_AF2 AF2 << 6
-#define GPIOA_PA6_MODER_AF AF2 << 12
-
-/*
- ******************************************************************************
- * EXTI BITS
- ******************************************************************************
- */
-
-// EXTICR2 used for lines 4-7 corresponding with PA4-PA7
-#define SYSCFG_PA6_EXTICR2 0b0000
+#define AF1 0b0001
+#define AFRH_PA15_AF1 AF1 << 28
+#define GPIOA_PA15_MODER_AF AF1 << 30
 
 /*
  ******************************************************************************
