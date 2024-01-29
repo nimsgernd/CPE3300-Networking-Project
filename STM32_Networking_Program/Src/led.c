@@ -74,4 +74,7 @@ void led_init(void)
 
     // Set LED pin modes
     gpiob->MODER = (gpiob->MODER & ~MODE_MASK) | GPIOB_LED_MODES;
+
+    // Reset old values
+    gpiob->ODR &= ~LED_MASK;
 }
