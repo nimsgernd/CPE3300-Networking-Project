@@ -176,7 +176,7 @@ void post_collision_delay(void)
 
 // Timer 3 interrupt fires when the timer is active for over 1.13ms
 /**
- * @brief	Interrupt service routine to monistor the network line state using
+ * @brief	Interrupt service routine to monitor the network line state using
  * 			timer 3 with a time out of 1.13ms.
  *
  */
