@@ -179,9 +179,6 @@ void post_collision_delay(void)
  */
 void TIM3_IRQHandler(void)
 {
-	// Clear interrupt flag
-//	tim3->SR = 0;
-
 	if (tim3->SR & CC1IF) // if the interrupt source is a capture event on channel 1
 	{
 		// Timer Ticks to Microseconds conversion
@@ -217,5 +214,5 @@ void TIM3_IRQHandler(void)
 		}
 		previous_edge_time = current_edge_time; // update the time of the previous edge
 	}
-	tim3->SR &= ~CC1IF; // Clear the interrupt flag manually
+	tim3->SR &= ~CC1IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 1
 }
