@@ -60,7 +60,7 @@
 
 // CCMR to configure TIM3 to Timer Input Capture TIC
 #define CC1S 1 << 0	// [0 = CC1 channel is configured as output, 1 = CC1 channel is configured as input, IC1 is mapped on TI1]
-#define CC2S 0b10 << 8
+#define CC2S 0b01 << 8
 
 // Capture Compare 1 Enable bit in CCER
 #define CC1E 1 << 0	// [0  = disabled, 1 = enabled]
