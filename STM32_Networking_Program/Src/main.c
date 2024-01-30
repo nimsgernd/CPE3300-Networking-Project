@@ -36,6 +36,7 @@
 #include "delay.h"
 #include "led.h"
 #include "monitor.h"
+#include "uart_driver.h"
 
 /*
  ******************************************************************************
@@ -60,6 +61,7 @@ int main(void)
 
 	led_init();
 	monitor_init();
+	init_usart2(57600, F_CPU);
 
     /* Loop forever */
 	for(;;)
