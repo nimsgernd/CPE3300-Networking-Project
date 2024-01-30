@@ -163,6 +163,7 @@ void monitor(void)
 	{
 		led_enable(COLLISION_LED_STATE); // Enables third to left LED
 		post_collision_delay();
+		state = BUSY;
 	}
 	break;
 
@@ -197,7 +198,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if (tim2_cnt != 0)
+    	if ((tim2_cnt != 0) && (state == BUSY))
     	{
     		// Check line state
     		if (gpiob->IDR & GPIO_IDR_Px3)
