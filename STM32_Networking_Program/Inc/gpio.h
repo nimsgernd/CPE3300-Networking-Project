@@ -33,9 +33,11 @@
 #define GPIOB_BASE	0x40020400
 #define GPIOA_BASE	0x40020000
 #define TIM2_BASE 	0x40000000
+#define TIM8_BASE 	0x40010400
 #define TIM14_BASE	0x40002000
 #define RTC_BASE	0x40002800
 #define NVIC_BASE	0xE000E100
+#define NVIC_ISER1	0xE000E104
 #define SYSCFG_EXTICR2_BASE 0x4001380C
 
 /*
@@ -47,12 +49,17 @@
 // Clock enable bit in TIM control register (CR)
 #define CEN 1<<0	// [0 = disabled, 1 = enabled]
 
+#define UIE 1 << 0		// Timer interrupt enable [0 = disabled, 1 = enabled]
+#define UIF 1 <<0		// Update Interrupt flag
+
 // RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4)
 #define TIM2EN 1 << 0	// [0 = disabled, 1 = enabled]
+#define TIM8EN 1 << 2
 #define TIM14EN 1 << 8	// [0 = disabled, 1 = enabled]
 
 // NVIC position of 16-bit timers (TIM3 and TIM4)
 #define TIM2_POS 1 << 28	// [0 = disabled, 1 = enabled]
+#define TIM8_UP_TIM13_POS 44
 
 // Capture/Compare 1 interrupt enable for channel 1
 #define CC1IE 1 << 1	// [0 = disabled, 1 = enabled]
@@ -78,7 +85,7 @@
 // This bit is set by hardware on a capture. It is cleared by software or by
 // reading the TIMx_CCR1 register
 #define CC1IF 1 << 1 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
-#define CC2IF 1 << 2
+#define CC2IF 1 << 1
 
 /*
  ******************************************************************************
@@ -293,4 +300,6 @@ typedef struct{
 	volatile uint32_t SWIER;
 	volatile uint32_t PR;
 }EXTI;
+
+
 #endif /* GPIO_H_ */

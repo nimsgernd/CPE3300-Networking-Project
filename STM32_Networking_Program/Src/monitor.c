@@ -23,6 +23,7 @@
 // Library
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 
 // Project
 #include "delay.h"
@@ -46,9 +47,11 @@ volatile uint32_t previous_edge_time = 0; // Time of previous edge
 
 // Addresses
 static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
+static volatile GPTIM16B *const tim8 = (GPTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 static volatile RCC *const rcc = (RCC *)RCC_BASE;
-static volatile uint32_t *const nvic_iser0 = (uint32_t *)NVIC_BASE;
+static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
+
 static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 
 // State
@@ -77,11 +80,18 @@ void monitor_init(void)
 	// Enable clock for GPIOA
 	rcc->AHB1ENR |= GPIOBEN;
 
-	// Enable clock for tim3
+	// Enable clock for tim2
 	rcc->APB1ENR |= TIM2EN;
+
+    // Enable clock for tim8
+    rcc->APB2ENR |= TIM8EN;
 
 	// Enable clock for tim14
 	rcc->APB1ENR |= TIM14EN;
+
+    // Set the auto-reload value to achieve a period of 1.13 ms
+    // ARR = (F_CPU / desired_frequency) - 1
+    tim8->ARR = (F_CPU / SIGNAL_TOLERANCE_FREQUENCY_HZ) - 1;
 
 	// Set PA6 to alternate function for TIC/TOC
 	gpiob->MODER |= GPIO_Px3_MODER_AF;
@@ -90,7 +100,10 @@ void monitor_init(void)
 	gpiob->AFRL = AFRL_Px3_AF1;
 
 	// Open interrupt for TIM3
-	*nvic_iser0 = TIM2_POS;
+	iser[0] = TIM2_POS;
+
+    // Enable TIM8 interrupt in the NVIC
+	iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
 
 	// Set to TIC in compare compare mode register 1 in CC
 	tim2->CCMR1 = CC2S;
@@ -104,11 +117,17 @@ void monitor_init(void)
 	// Enable the interrupt on capture compare
 	tim2->DIER |= CC2IE;
 
+    // Enable the timer interrupt
+    tim8->DIER |= UIE;
+
     // Set the auto-reload value to the maximum for a 16-bit counter
     tim2->ARR = MAX_16;
 
 	// Enable the counter
 	tim2->CR1 |= CEN;
+
+	// Enable counter
+	tim8->CR1 |= CEN;
 
 	// Enable timer
 	tim14->CR1 |= CEN;
@@ -169,6 +188,20 @@ void post_collision_delay(void)
 	delay_us(microSecDelay);
 }
 
+void TIM8_UP_TIM13_IRQHandler(void)
+{
+    // Check if the update interrupt flag is set
+    if (tim8->SR & UIF)
+    {
+        // The timer has overflowed
+
+        // Insert your code here
+
+        // Clear the update interrupt flag
+        tim8->SR &= ~UIF;
+    }
+}
+
 // Timer 3 interrupt fires when the timer is active for over 1.13ms
 /**
  * @brief	Interrupt service routine to monitor the network line state using
@@ -180,10 +213,10 @@ void TIM2_IRQHandler(void)
 	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 1
 	{
 		// Timer Ticks to Microseconds conversion
-		uint32_t ticks = tim2->CCR1;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
-		uint32_t time_in_microseconds = (ticks / F_CPU) * 1e6;			   // Time_in_us = (TimerTicks/Timer Frequency) * 1,000,000
-		uint32_t current_edge_time = time_in_microseconds;				   // Record the captured time
-		uint32_t time_difference = current_edge_time - previous_edge_time; // Time since last edge
+		uint64_t ticks = tim2->CCR2;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
+		uint64_t time_in_microseconds = (ticks * 1e6) / F_CPU;
+		uint64_t current_edge_time = time_in_microseconds;				   // Record the captured time
+		uint64_t time_difference = abs(current_edge_time - previous_edge_time); // Time since last edge
 
 		// Determine edge type (rising/falling)
 		int channel = (gpiob->IDR & GPIO_IDR_Px3); // Mask for bit 6 (PA6). [1 = PA6 is rising edge, 0 = PA6 is falling edge]
@@ -222,6 +255,6 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 		}
 		previous_edge_time = current_edge_time; // update the time of the previous edge
+		tim2->SR &= ~CC2IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 2
 	}
-	tim2->SR &= ~CC2IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 2
 }
