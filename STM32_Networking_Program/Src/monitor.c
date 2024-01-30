@@ -197,19 +197,10 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if (tim2_cnt != 0)
+    	if (tim2_cnt != 0 && state == BUSY)
     	{
-    		// Check line state
-    		if (gpiob->IDR & GPIO_IDR_Px3)
-    		{
-    			// Line high, idle
-    			state = IDLE;
-    		}
-    		else
-    		{
-    			// Line low, collision
-    			state = COLLISION;
-    		}
+    		// Check line state. High = idle, Low = collision
+    		state = (gpiob->IDR & GPIO_IDR_Px3) ? IDLE : COLLISION;
     	}
 
     	// Reset count variable
