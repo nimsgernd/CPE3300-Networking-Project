@@ -56,6 +56,7 @@ static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 
 // State
 static enum State state = IDLE; // Current state
+static uint16_t tim2_cnt = 0;
 
 /*
  ******************************************************************************
@@ -77,7 +78,7 @@ static void post_collision_delay(void);
  */
 void monitor_init(void)
 {
-	// Enable clock for GPIOA
+	// Enable clock for GPIOB
 	rcc->AHB1ENR |= GPIOBEN;
 
 	// Enable clock for tim2
@@ -193,9 +194,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
     // Check if the update interrupt flag is set
     if (tim8->SR & UIF)
     {
-        // The timer has overflowed
-
-        // Insert your code here
+		
 
         // Clear the update interrupt flag
         tim8->SR &= ~UIF;
