@@ -47,6 +47,8 @@ volatile uint16_t  tim8_cnt = 0; // used for storing the count in timer 8
 #define COLLISION_LED_STATE (int)0b0010000000 // Third to left LED value
 #define ERROR_LED_STATE (int)0b1111111111	  // ALL LED value
 #define MAX_16 0xFFFF
+#define HALF_BIT_PERIOD_500_US 500e-6	
+#define CLOCK_CYCLES_500_US (int)(F_CPU * HALF_BIT_PERIOD_500_US)
 
 // Addresses
 static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
@@ -102,7 +104,9 @@ void monitor_init(void)
 	// (for GPIO pins 0 - 7)
 	gpiob->AFRL = AFRL_Px3_AF1;
 
-	// Open interrupt for TIM3
+	TIM8->CCR2 = CLOCK_CYCLES_500_US; // Set the compare value to 500us
+
+	// Open interrupt for TIM2
 	iser[0] = TIM2_POS;
 
     // Enable TIM8 interrupt in the NVIC
@@ -234,6 +238,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	}
 }
 
+
+
 // Timer 2 interrupt fires when the timer is active for over 1.13ms
 /**
  * @brief	Interrupt service routine to monitor the network line state using
@@ -262,7 +268,7 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 		}
 
-		tim2->SR=~CC2IF; // Clear the interrupt flag manually/by software if
+		tim2->SR= ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
 	}
 }
