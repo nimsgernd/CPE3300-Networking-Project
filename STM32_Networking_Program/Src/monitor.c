@@ -94,7 +94,7 @@ void monitor_init(void)
 
     // Set the auto-reload value to achieve a period of 1.13 ms
     // ARR = (F_CPU / desired_frequency) - 1
-    tim8->ARR = (F_CPU / SIGNAL_TOLERANCE_FREQUENCY_HZ) - 1;
+    tim8->ARR = THRESHOLD_TICKS;
 
 	// Set PA6 to alternate function for TIC/TOC
 	gpiob->MODER |= GPIO_Px3_MODER_AF;
