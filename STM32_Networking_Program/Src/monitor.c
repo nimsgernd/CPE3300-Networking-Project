@@ -130,7 +130,7 @@ void monitor_init(void)
 	tim2->CR1 |= CEN;
 
 	// Enable counter
-	tim8->CR1 |= CEN;
+//	tim8->CR1 |= CEN;
 
 	// Enable timer
 	tim14->CR1 |= CEN;
@@ -194,11 +194,14 @@ void post_collision_delay(void)
 
 void TIM8_UP_TIM13_IRQHandler(void)
 {
+	// Turn timer off
+	tim8->CR1 &= ~CEN;
+
 	// Check if the update interrupt flag is set
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if ((tim2_cnt != 0) && (state == BUSY))
+    	if ((tim2_cnt != 0) && (abs(tim8->CNT - tim2_cnt) > THRESHOLD_TICKS-1) && (state == BUSY))
     	{
     		// Check line state. High = idle, Low = collision
     		state = (gpiob->IDR & GPIO_IDR_Px3) ? IDLE : COLLISION;
@@ -212,7 +215,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	}
 }
 
-// Timer 3 interrupt fires when the timer is active for over 1.13ms
+// Timer 2 interrupt fires when the timer is active for over 1.13ms
 /**
  * @brief	Interrupt service routine to monitor the network line state using
  * 			timer 3 with a time out of 1.13ms.
@@ -225,6 +228,9 @@ void TIM2_IRQHandler(void)
 		// Store count values at the time of the most recent edge
 		tim2_cnt = tim2->CCR2;
 		tim8_cnt = tim8->CCR1;
+
+		// Once edge detected, start 1.13 ms timer
+		tim8->CR1 |= CEN;
 
 		// From Idle, any signal bus voltage edge switches to busy
 		// From Busy, only timeout events at 1.13ms switches back to idle (high) or collision (low)
