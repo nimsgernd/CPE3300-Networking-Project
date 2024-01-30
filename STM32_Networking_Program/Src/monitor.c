@@ -162,8 +162,6 @@ void monitor(void)
 	case COLLISION:
 	{
 		led_enable(COLLISION_LED_STATE); // Enables third to left LED
-		post_collision_delay();
-		state = BUSY;
 	}
 	break;
 
@@ -230,8 +228,15 @@ void TIM2_IRQHandler(void)
 		// From Busy, only timeout events at 1.13ms switches back to idle (high) or collision (low)
 		// If in collision, monitor main routine already brings it to BUSY
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout
-		state = BUSY;
-
+		if (state == COLLISION)
+		{
+			post_collision_delay();
+			state = BUSY;
+		}
+		else
+		{
+			state = BUSY;
+		}
 
 		// // Timer Ticks to Microseconds conversion
 		// uint64_t ticks = tim2->CCR2;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
