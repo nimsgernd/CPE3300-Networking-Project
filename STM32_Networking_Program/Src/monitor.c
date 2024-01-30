@@ -37,6 +37,9 @@
  ******************************************************************************
  */
 volatile uint32_t previous_edge_time = 0; // Time of previous edge
+volatile uint16_t  tim2_cnt = 0; // used for storing the count in timer 2
+volatile uint16_t  tim8_cnt = 0; // used for storing the count in timer 8
+
 
 // Definitions
 #define IDLE_LED_STATE (int)0b1000000000	  // Left most LED value
@@ -211,6 +214,9 @@ void TIM2_IRQHandler(void)
 {
 	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 1
 	{
+		// Store count values at the time of the most recent edge
+		tim2_cnt = tim2->CCR2;
+		tim8_cnt = tim8->CCR1;
 		// Timer Ticks to Microseconds conversion
 		uint64_t ticks = tim2->CCR2;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
 		uint64_t time_in_microseconds = (ticks * 1e6) / F_CPU;
