@@ -134,6 +134,20 @@ void monitor_init(void)
 	tim14->CR1 |= CEN;
 }
 
+
+/**
+ * @brief	Transmits the given char* along the network using Manchester
+ * 			Encoding when the network is idle.
+ *
+ *
+ *
+ */
+void transmit(char* msg)
+{
+
+}
+
+
 /**
  * @brief	Updates status LEDs based on state.
  *
