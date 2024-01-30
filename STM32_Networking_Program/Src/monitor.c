@@ -228,10 +228,10 @@ void TIM2_IRQHandler(void)
 
 		// From Idle, any signal bus voltage edge switches to busy
 		// From Busy, only timeout events at 1.13ms switches back to idle (high) or collision (low)
-		if (state == IDLE || state == COLLISION)
-		{
-			state = BUSY;
-		}
+		// If in collision, monitor main routine already brings it to BUSY
+		// All other states, BUSY, and IDLE also go to BUSY if not timeout
+		state = BUSY;
+
 
 		// // Timer Ticks to Microseconds conversion
 		// uint64_t ticks = tim2->CCR2;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
