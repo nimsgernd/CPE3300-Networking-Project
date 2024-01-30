@@ -46,9 +46,6 @@ static volatile RCC* const rcc = (RCC*)RCC_BASE;
  */
 void led_enable(int number)
 {
-    // Clear all old led bits
-    gpiob->ODR &= ~LED_MASK;
-
     // Only look at upper four bits first
     int temp = number & LED_MASK_U4;
 
@@ -58,9 +55,9 @@ void led_enable(int number)
     //Put temps in right positions
     int temp3 = temp << 6;
     temp3 = temp3 | (temp2 << 5);
-    
-    // Write new value to ODR
-    gpiob->ODR |= temp3;
+
+    // Clear all old led bits and set new ones in one operation
+    gpiob->BSRR = (LED_MASK << 16) | temp3;
 }
 
 /**
