@@ -54,7 +54,7 @@
 
 // RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4)
 #define TIM2EN 1 << 0	// [0 = disabled, 1 = enabled]
-#define TIM8EN 1 << 2
+#define TIM8EN 1 << 1
 #define TIM14EN 1 << 8	// [0 = disabled, 1 = enabled]
 
 // NVIC position of 16-bit timers (TIM3 and TIM4)
