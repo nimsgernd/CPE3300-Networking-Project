@@ -21,13 +21,13 @@
  */
 
 // Library
+#include <F446RE.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 
 // Project
 #include "delay.h"
-#include "gpio.h"
 #include "led.h"
 #include "monitor.h"
 
