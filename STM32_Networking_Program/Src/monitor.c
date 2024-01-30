@@ -93,7 +93,6 @@ void monitor_init(void)
 	rcc->APB1ENR |= TIM14EN;
 
     // Set the auto-reload value to achieve a period of 1.13 ms
-    // ARR = (F_CPU / desired_frequency) - 1
     tim8->ARR = THRESHOLD_TICKS-1;
 
 	// Set PA6 to alternate function for TIC/TOC
@@ -128,9 +127,6 @@ void monitor_init(void)
 
 	// Enable the counter
 	tim2->CR1 |= CEN;
-
-	// Enable counter
-//	tim8->CR1 |= CEN;
 
 	// Enable timer
 	tim14->CR1 |= CEN;
@@ -190,6 +186,10 @@ void post_collision_delay(void)
 	delay_us(microSecDelay);
 }
 
+/**
+ * @brief
+ *
+ */
 void TIM8_UP_TIM13_IRQHandler(void)
 {
 	// Turn timer off
@@ -199,7 +199,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if ((tim2_cnt != 0) && (abs(tim8->CNT - tim2_cnt) > THRESHOLD_TICKS-1) && (state == BUSY))
+    	if (tim2_cnt != 0)
     	{
     		// Check line state. High = idle, Low = collision
     		state = (gpiob->IDR & GPIO_IDR_Px3) ? IDLE : COLLISION;
@@ -230,13 +230,9 @@ void TIM2_IRQHandler(void)
 		// Once edge detected, start 1.13 ms timer
 		tim8->CR1 |= CEN;
 
-		// From Idle, any signal bus voltage edge switches to busy
-		// From Busy, only timeout events at 1.13ms switches back to idle (high) or collision (low)
-		// If in collision, monitor main routine already brings it to BUSY
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout
 		if (state == COLLISION)
 		{
-			post_collision_delay();
 			state = BUSY;
 		}
 		else
@@ -244,49 +240,6 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 		}
 
-		// // Timer Ticks to Microseconds conversion
-		// uint64_t ticks = tim2->CCR2;									   // Get the number of ticks. Reading from CCR1 clears CC1IF bit in TIMx_SR
-		// uint64_t time_in_microseconds = (ticks * 1e6) / F_CPU;
-		// uint64_t current_edge_time = time_in_microseconds;				   // Record the captured time
-		// uint64_t time_difference = abs(current_edge_time - previous_edge_time); // Time since last edge
-
-		// // Determine edge type (rising/falling)
-		// int channel = (gpiob->IDR & GPIO_IDR_Px3); // Mask for bit 6 (PA6). [1 = PA6 is rising edge, 0 = PA6 is falling edge]
-		// //channel = channel >> 6;					   // Right shift to position 0
-
-
-		// if (state == IDLE)
-		// {
-		// 	// Any signal bus voltage edge switches to busy
-		// 	state = BUSY;
-		// }
-		// else if (state == BUSY)
-		// {
-		// 	// To prevent race condition at edges, uses < and > to keep in BUSY state
-		// 	/*TIMEOUT EVENTS*/
-		// 		// If 1.113ms >= edge_time >= 1.188ms and rising edge, idle
-		// 		// If 1.04ms >= edge_time >= 1.14ms and falling edge, collision
-		// 		// If edge_time > 1.13 ms and rising edge, idle
-		// 	if(channel)
-		// 	{
-		// 		if(time_difference > IDLE_MOE_LOW_US && time_difference < IDLE_MOE_HIGH_US)
-		// 		{
-		// 			state = IDLE;
-		// 		}
-		// 	} else
-		// 	{
-		// 		if(time_difference > COLLISION_MOE_LOW_US && time_difference < COLLISION_MOE_HIGH_US)
-		// 		{
-		// 			state = COLLISION;
-		// 		}
-		// 	}
-		// }
-		// else
-		// {
-		// 	// When in collision, any signal bus voltage edges bring it to the BUSY state
-		// 	state = BUSY;
-		// }
-		// previous_edge_time = current_edge_time; // update the time of the previous edge
 		tim2->SR &= ~CC2IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 2
 	}
 }
