@@ -59,7 +59,6 @@ static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 
 // State
 static enum State state = IDLE; // Current state
-static uint16_t tim2_cnt = 0;
 
 /*
  ******************************************************************************
@@ -194,14 +193,31 @@ void post_collision_delay(void)
 
 void TIM8_UP_TIM13_IRQHandler(void)
 {
-    // Check if the update interrupt flag is set
-    if (tim8->SR & UIF)
-    {
-		
+	// Check if the update interrupt flag is set
+	if (tim8->SR & UIF)
+	{
+		// If count has not been updated
+    	if (tim2_cnt != 0)
+    	{
+    		// Check line state
+    		if (gpiob->IDR & GPIO_IDR_Px3)
+    		{
+    			// Line high, idle
+    			state = IDLE;
+    		}
+    		else
+    		{
+    			// Line low, collision
+    			state = COLLISION;
+    		}
+    	}
+
+    	// Reset count variable
+    	tim2_cnt = 0;
 
         // Clear the update interrupt flag
-        tim8->SR &= ~UIF;
-    }
+    	tim8->SR &= ~UIF;
+	}
 }
 
 // Timer 3 interrupt fires when the timer is active for over 1.13ms
