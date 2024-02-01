@@ -21,13 +21,14 @@
  */
 
 // Library
-#include <F446RE.h>
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 
 // Project
 #include "delay.h"
+#include "F446RE.h"
 #include "led.h"
 #include "monitor.h"
 
@@ -98,7 +99,8 @@ void monitor_init(void)
 	// Set PA6 to alternate function for TIC/TOC
 	gpiob->MODER |= GPIO_Px3_MODER_AF;
 
-	// Set PA6 to alternate function in Alternate Function Register Low (for GPIO pins 0 - 7)
+	// Set PA6 to alternate function in Alternate Function Register Low
+	// (for GPIO pins 0 - 7)
 	gpiob->AFRL = AFRL_Px3_AF1;
 
 	// Open interrupt for TIM3
@@ -113,8 +115,10 @@ void monitor_init(void)
 	// Enable the capture compare for the channel
 	tim2->CCER |= CC2E;
 
-	// Set the direction of the input capture (rising edge, falling edge, or both)
-	tim2->CCER |= CC2P | CC2NP; // Trigger on rising (CC1P) + falling edges (CC1NP)
+	// Set the direction of the input capture
+	// (rising edge, falling edge, or both)
+	tim2->CCER |= CC2P | CC2NP; // Trigger on rising (CC1P)
+								//          + falling edges (CC1NP)
 
 	// Enable the interrupt on capture compare
 	tim2->DIER |= CC2IE;
@@ -187,7 +191,9 @@ void post_collision_delay(void)
 }
 
 /**
- * @brief
+ * @brief	Timer 8 is a 1.13ms timeout. If an edge has not been seen since the
+ * 			last time the interrupt fired the interrupt determines the state
+ * 			between idle and collision.
  *
  */
 void TIM8_UP_TIM13_IRQHandler(void)
@@ -216,12 +222,13 @@ void TIM8_UP_TIM13_IRQHandler(void)
 // Timer 2 interrupt fires when the timer is active for over 1.13ms
 /**
  * @brief	Interrupt service routine to monitor the network line state using
- * 			timer 3 with a time out of 1.13ms.
+ * 			timer 2 and tracks edges seen on the input line.
  *
  */
 void TIM2_IRQHandler(void)
 {
-	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 1
+	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on
+						  // channel 1
 	{
 		// Store count values at the time of the most recent edge
 		tim2_cnt = tim2->CCR2;
@@ -240,6 +247,7 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 		}
 
-		tim2->SR &= ~CC2IF; // Clear the interrupt flag manually/by software if not set by capture event on channel 2
+		tim2->SR &= ~CC2IF; // Clear the interrupt flag manually/by software if
+							// not set by capture event on channel 2
 	}
 }

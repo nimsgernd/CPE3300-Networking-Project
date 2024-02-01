@@ -64,8 +64,8 @@ void usart2_putch(char c){
 
 void init_usart2(uint32_t baud, uint32_t sysclk){
 	// Enable clocks for GPIOA and USART2
-	*(RCC_AHB1ENR) |= (1<<GPIOAEN);
-	*(RCC_APB1ENR) |= (1<<USART2EN);
+	*(RCC_AHB1ENR) |= (1<<GPIOA_EN);
+	*(RCC_APB1ENR) |= (1<<USART2_EN);
 
 	// Function 7 of PORTA pins is USART
 	*(GPIOA_AFRL) &= (0xFFFF00FF); // Clear the bits associated with PA3 and PA2
