@@ -137,6 +137,8 @@ void monitor_init(void)
 /**
  * @brief	Updates status LEDs based on state.
  *
+ * 			TODO Should try to move into an interrupt
+ *
  */
 void monitor(void)
 {

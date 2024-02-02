@@ -35,11 +35,11 @@
 #include <stdlib.h>
 
 // Project
+#include "console.h"
 #include "delay.h"
 #include "led.h"
 #include "monitor.h"
 #include "F446RE.h"
-#include "uart_driver.h"
 
 /*
  ******************************************************************************
@@ -61,15 +61,19 @@
  */
 int main(void)
 {
-
+	// Initialize LED bar
 	led_init();
+
+	// Initialize CPE3300 network monitor
 	monitor_init();
-	init_usart2(57600, F_CPU);
+
+	// Initialize program console
+	console_init();
 
     /* Loop forever */
 	for(;;)
 	{
-		printf(">>");
-		monitor();
+		monitor();	// TODO move to an interrupt
+		user_prompt();
 	}
 }
