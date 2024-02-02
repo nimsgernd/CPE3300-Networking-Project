@@ -29,7 +29,7 @@
 #include "delay.h"
 #include "F446RE.h"
 #include "led.h"
-#include "monitor.h"
+#include "network.h"
 
 /*
  ******************************************************************************
@@ -173,15 +173,6 @@ void monitor(void)
 	}
 }
 
-
-/**
- * @brief	Returns the current state of the network monitor.
- *
- */
-State get_state(void)
-{
-	return state;
-}
 
 /**
  * @brief	Creates a randomized delay based on timer 14 which is acting as a

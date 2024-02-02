@@ -8,8 +8,8 @@
  ******************************************************************************
  */
 
-#ifndef MONITOR_H_
-#define MONITOR_H_
+#ifndef NETWORK_H_
+#define NETWORK_H_
 
 /*
  ******************************************************************************
@@ -68,6 +68,5 @@ typedef enum
 
 void monitor_init(void);
 void monitor(void);
-State get_state(void);
 
 #endif
