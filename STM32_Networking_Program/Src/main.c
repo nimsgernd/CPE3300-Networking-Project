@@ -31,11 +31,14 @@
  */
 
 // Library
+#include <stdio.h>
+#include <stdlib.h>
 
 // Project
 #include "delay.h"
 #include "led.h"
 #include "monitor.h"
+#include "F446RE.h"
 #include "uart_driver.h"
 
 /*
@@ -66,6 +69,7 @@ int main(void)
     /* Loop forever */
 	for(;;)
 	{
+		printf(">>");
 		monitor();
 	}
 }

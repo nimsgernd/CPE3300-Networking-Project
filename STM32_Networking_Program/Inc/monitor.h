@@ -53,12 +53,12 @@
  ******************************************************************************
  */
 
-enum State 
+typedef enum
 {
     BUSY,
     IDLE,
     COLLISION
-};
+}State;
 
 /*
  ******************************************************************************
@@ -68,5 +68,6 @@ enum State
 
 void monitor_init(void);
 void monitor(void);
+State get_state(void);
 
 #endif

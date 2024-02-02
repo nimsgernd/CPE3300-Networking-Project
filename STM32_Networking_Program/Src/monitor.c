@@ -24,7 +24,6 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <math.h>
 
 // Project
 #include "delay.h"
@@ -59,7 +58,7 @@ static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
 static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 
 // State
-static enum State state = IDLE; // Current state
+static State state = IDLE; // Current state
 
 /*
  ******************************************************************************
@@ -119,7 +118,6 @@ void monitor_init(void)
 	// (rising edge, falling edge, or both)
 	tim2->CCER |= CC2P | CC2NP; // Trigger on rising (CC1P)
 								//          + falling edges (CC1NP)
-
 	// Enable the interrupt on capture compare
 	tim2->DIER |= CC2IE;
 
@@ -171,6 +169,16 @@ void monitor(void)
 		led_enable(ERROR_LED_STATE); // Enables all LEDs
 	}
 	}
+}
+
+
+/**
+ * @brief	Returns the current state of the network monitor.
+ *
+ */
+State get_state(void)
+{
+	return state;
 }
 
 /**
@@ -247,7 +255,7 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 		}
 
-		tim2->SR &= ~CC2IF; // Clear the interrupt flag manually/by software if
+		tim2->SR= ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
 	}
 }
