@@ -248,7 +248,7 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 		}
 
-		tim2->SR ~CC2IF; // Clear the interrupt flag manually/by software if
+		tim2->SR=~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
 	}
 }
