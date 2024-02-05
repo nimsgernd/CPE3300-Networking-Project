@@ -68,5 +68,7 @@ typedef enum
 
 void monitor_init(void);
 void monitor(void);
+static void transmit(void);
+void encode(char* msg);
 
 #endif

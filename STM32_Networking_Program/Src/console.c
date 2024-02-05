@@ -81,6 +81,7 @@ void user_prompt(void)
 	token2 = strtok(NULL," ");
 	if(!strcmp(token1,"xmit")){
 		//TODO put tranmit func here
+		encode(token2);
 		printf("transmitting '%s'...\n",token2);
 	} else if(!strcmp(token1,"signal_1k\n")){
 		printf("transmitting 1KHz square wave for 5 seconds...\n");

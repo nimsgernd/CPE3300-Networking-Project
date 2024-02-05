@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Project
 #include "delay.h"
@@ -48,7 +49,8 @@ volatile uint16_t  tim8_cnt = 0; // used for storing the count in timer 8
 #define ERROR_LED_STATE (int)0b1111111111	  // ALL LED value
 #define MAX_16 0xFFFF
 #define HALF_BIT_PERIOD_500_US 500e-6	
-#define CLOCK_CYCLES_500_US (int)(F_CPU * HALF_BIT_PERIOD_500_US)
+#define CLOCK_CYCLES_500_US (int)((F_CPU * HALF_BIT_PERIOD_500_US)-1)
+#define CHAR_BIT 8
 
 // Addresses
 static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
@@ -61,6 +63,10 @@ static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 
 // State
 static State state = IDLE; // Current state
+
+// Manchester Encoded Transmission Data
+static int* transmission_data = NULL;
+static int transmission_len = 0;
 
 /*
  ******************************************************************************
@@ -104,8 +110,6 @@ void monitor_init(void)
 	// (for GPIO pins 0 - 7)
 	gpiob->AFRL = AFRL_Px3_AF1;
 
-	TIM8->CCR2 = CLOCK_CYCLES_500_US; // Set the compare value to 500us
-
 	// Open interrupt for TIM2
 	iser[0] = TIM2_POS;
 
@@ -118,12 +122,15 @@ void monitor_init(void)
 	// Enable the capture compare for the channel
 	tim2->CCER |= CC2E;
 
+    // Set the compare value for channel 1 to the number of clock cycles in 500us
+	tim2->CCR1 = CLOCK_CYCLES_500_US;
+
 	// Set the direction of the input capture
 	// (rising edge, falling edge, or both)
-	tim2->CCER |= CC2P | CC2NP; // Trigger on rising (CC1P)
+	tim2->CCER |= (CC2P | CC2NP); // Trigger on rising (CC1P)
 								//          + falling edges (CC1NP)
 	// Enable the interrupt on capture compare
-	tim2->DIER |= CC2IE;
+	tim2->DIER |= (CC2IE | CC1IE);
 
     // Enable the timer interrupt
     tim8->DIER |= UIE;
@@ -140,14 +147,55 @@ void monitor_init(void)
 
 
 /**
- * @brief	Transmits the given char* along the network using Manchester
- * 			Encoding when the network is idle.
+ * @brief	Manchester encodes the given char* into a bit array to be parsed
+ *			inside transmit function. The bit array is Manchester encoded.
+ * @returns Pointer to encoded data array
+ *
+ */
+
+
+void encode(char* msg) {
+
+	// Make sure to have enough size for Manchester encoding i.e. 2*bits
+	transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
+	transmission_len = 2 * strlen(msg) * CHAR_BIT;
+
+	// Convert every bit to Manchester pair i.e. bit 0 = bit to transmit bit 1 = ~bit0
+    int len = strlen(msg);
+    for(int i = 0; i < len; i++) {
+        for(int j = 0; j < CHAR_BIT; j++) {
+            int bit = (msg[i] >> j) & 1;
+            transmission_data[2*(i*CHAR_BIT + j)] = bit;
+            transmission_data[2*(i*CHAR_BIT + j) + 1] = ~bit & 1; // Use bitwise AND to ensure the result is 0 or 1
+        }
+    }
+}
+
+
+/**
+ * @brief	Transmits the current bit pair in TIM2 CH1 ISR set at
+ * 			500 uS.
  *
  *
  *
  */
-void transmit(char* msg)
+static void transmit(void)
 {
+	static int current_bit = 0;
+
+	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
+	// Adjusted every 500 uS
+	gpiob->ODR |= transmission_data[current_bit];
+
+
+	if(current_bit >= sizeof(transmission_data))
+	{
+		// Frees transmission_data
+		free(transmission_data);
+
+		// Set to NULL
+		transmission_data = NULL;
+	}
 
 }
 
@@ -248,8 +296,17 @@ void TIM8_UP_TIM13_IRQHandler(void)
  */
 void TIM2_IRQHandler(void)
 {
-	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on
-						  // channel 1
+	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
+						 // every half-bit period "500 us" for transmitter
+	{
+		// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
+		transmit();
+
+		// Clear interrupt flag manually since not reading from
+		tim2->SR = ~CC1IF;
+	}
+	else if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 2
+
 	{
 		// Store count values at the time of the most recent edge
 		tim2_cnt = tim2->CCR2;
