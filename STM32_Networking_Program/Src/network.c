@@ -37,10 +37,6 @@
  * Variables
  ******************************************************************************
  */
-volatile uint32_t previous_edge_time = 0; // Time of previous edge
-volatile uint16_t  tim2_cnt = 0; // used for storing the count in timer 2
-volatile uint16_t  tim8_cnt = 0; // used for storing the count in timer 8
-
 
 // Definitions
 #define IDLE_LED_STATE (int)0b1000000000	  // Left most LED value
@@ -53,16 +49,20 @@ volatile uint16_t  tim8_cnt = 0; // used for storing the count in timer 8
 #define CHAR_BIT 8
 
 // Addresses
-static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
-static volatile GPTIM16B *const tim8 = (GPTIM16B *)TIM8_BASE;
-static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
-static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
-
+static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
+static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
+static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
+static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 
 // State
 static State state = IDLE; // Current state
+
+// Timer Variables
+static volatile uint32_t previous_edge_time = 0; // Time of previous edge
+static volatile uint16_t  tim2_cnt = 0; // used for storing the count in timer 2
+static volatile uint16_t  tim8_cnt = 0; // used for storing the count in timer 8
 
 // Manchester Encoded Transmission Data
 static int* transmission_data = NULL;
@@ -75,6 +75,7 @@ static int transmission_len = 0;
  */
 
 static void post_collision_delay(void);
+static void transmit(void);
 
 /*
  ******************************************************************************
@@ -143,6 +144,9 @@ void monitor_init(void)
 
 	// Enable timer
 	tim14->CR1 |= CEN;
+
+	// Check Initial State
+	tim8->CR1 |= CEN;
 }
 
 
@@ -199,53 +203,12 @@ static void transmit(void)
 
 }
 
-
-/**
- * @brief	Updates status LEDs based on state.
- *
- * 			TODO Should try to move into an interrupt
- *
- */
-void monitor(void)
-{
-	switch (state)
-	{
-	/* Idle */
-	case IDLE:
-	{
-		led_enable(IDLE_LED_STATE); // Enables left most LED
-	}
-	break;
-
-	/* Busy */
-	case BUSY:
-	{
-		led_enable(BUSY_LED_STATE); // Enables second to left LED
-	}
-	break;
-
-	/* Collision */
-	case COLLISION:
-	{
-		led_enable(COLLISION_LED_STATE); // Enables third to left LED
-	}
-	break;
-
-	/* Error */
-	default:
-	{
-		led_enable(ERROR_LED_STATE); // Enables all LEDs
-	}
-	}
-}
-
-
 /**
  * @brief	Creates a randomized delay based on timer 14 which is acting as a
  * 			free running counter.
  *
  */
-void post_collision_delay(void)
+static void post_collision_delay(void)
 {
 	// Reads count register from free running counter
 	uint32_t count = tim14->CNT;
@@ -272,14 +235,23 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if (tim2_cnt != 0)
+    	if (tim8_cnt == 0)
     	{
     		// Check line state. High = idle, Low = collision
-    		state = (gpiob->IDR & GPIO_IDR_Px3) ? IDLE : COLLISION;
+    		if (gpiob->IDR & GPIO_IDR_Px3)
+    		{
+    			state = IDLE;
+    			led_enable(IDLE_LED_STATE); // Enables left most LED
+    		}
+    		else
+    		{
+    			state = COLLISION;
+    			led_enable(COLLISION_LED_STATE); // Enables third to left LED
+    		}
     	}
 
     	// Reset count variable
-    	tim2_cnt = 0;
+    	tim8_cnt = 0;
 
         // Clear the update interrupt flag
     	tim8->SR &= ~UIF;
@@ -319,10 +291,12 @@ void TIM2_IRQHandler(void)
 		if (state == COLLISION)
 		{
 			state = BUSY;
+			led_enable(BUSY_LED_STATE); // Enables second to left LED
 		}
-		else
+		else if(state == IDLE)
 		{
 			state = BUSY;
+			led_enable(BUSY_LED_STATE); // Enables second to left LED
 		}
 
 		tim2->SR= ~CC2IF; // Clear the interrupt flag manually/by software if

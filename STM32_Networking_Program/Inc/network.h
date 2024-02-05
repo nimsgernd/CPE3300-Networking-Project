@@ -66,9 +66,9 @@ typedef enum
  ******************************************************************************
  */
 
-void monitor_init(void);
-void monitor(void);
-static void transmit(void);
-void encode(char* msg);
+extern void monitor_init(void);
+extern void encode(char* msg);
+extern void TIM2_IRQHandler(void);
+extern void TIM8_UP_TIM13_IRQHandler(void);
 
 #endif

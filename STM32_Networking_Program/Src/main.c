@@ -73,7 +73,6 @@ int main(void)
     /* Loop forever */
 	for(;;)
 	{
-		monitor();	// TODO move to an interrupt
 		user_prompt();
 	}
 }

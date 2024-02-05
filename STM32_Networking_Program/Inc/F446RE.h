@@ -219,6 +219,28 @@ typedef struct {
 	volatile uint32_t AFRH;
 }GPIO;
 
+typedef struct{
+	volatile uint32_t CR1;
+	volatile uint32_t CR2;
+	volatile uint32_t SMCR;
+	volatile uint32_t DIER;
+	volatile uint32_t SR;
+	volatile uint32_t EGR;
+	volatile uint32_t CCMR1;
+	volatile uint32_t CCMR2;
+	volatile uint32_t CCER;
+	volatile uint32_t CNT;
+	volatile uint32_t PSC;
+	volatile uint32_t ARR;
+	volatile uint32_t RCR;
+	volatile uint32_t CCR1;
+	volatile uint32_t CCR2;
+	volatile uint32_t CCR3;
+	volatile uint32_t CCR4;
+	volatile uint32_t BDTR;
+	volatile uint32_t DCR;
+	volatile uint32_t DMAR;
+}ACTIM16B;
 
 typedef struct{
 	volatile uint32_t CR1;
@@ -238,7 +260,7 @@ typedef struct{
 	volatile uint32_t CCR2;
 	volatile uint32_t CCR3;
 	volatile uint32_t CCR4;
-	const uint32_t RESERVED2;
+	const uint32_t RESERVED1;
 	volatile uint32_t DCR;
 	volatile uint32_t DMAR;
 	volatile uint32_t TIM2_OR;
@@ -268,6 +290,21 @@ typedef struct{
 	const uint32_t RESERVED8;
 	volatile uint32_t OR;
 }GPTIM16B;
+
+typedef struct{
+	volatile uint32_t CR1;
+	volatile uint32_t CR2;
+	const uint32_t RESERVED;
+	volatile uint32_t DIER;
+	volatile uint32_t SR;
+	volatile uint32_t EGR;
+	const uint32_t RESERVED1;
+	const uint32_t RESERVED2;
+	const uint32_t RESERVED3;
+	volatile uint32_t CNT;
+	volatile uint32_t PSC;
+	volatile uint32_t ARR;
+}BTIM16B;
 
 typedef struct{
 	volatile uint32_t TR;
