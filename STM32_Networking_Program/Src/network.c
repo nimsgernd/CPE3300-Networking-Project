@@ -57,7 +57,8 @@ static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 
 // State
-static State state = IDLE; // Current state
+static State state = IDLE;	// Current state
+static Delay busy_delay = NO;	// Collision to Busy delay flag
 
 // Timer Variables
 static volatile uint32_t previous_edge_time = 0; // Time of previous edge
@@ -74,7 +75,6 @@ static int transmission_len = 0;
  ******************************************************************************
  */
 
-static void post_collision_delay(void);
 static void transmit(void);
 
 /*
@@ -89,6 +89,7 @@ static void transmit(void);
  */
 void monitor_init(void)
 {
+	/* RCC Settings */
 	// Enable clock for GPIOB
 	rcc->AHB1ENR |= GPIOBEN;
 
@@ -101,22 +102,21 @@ void monitor_init(void)
 	// Enable clock for tim14
 	rcc->APB1ENR |= TIM14EN;
 
-    // Set the auto-reload value to achieve a period of 1.13 ms
-    tim8->ARR = THRESHOLD_TICKS-1;
-
-	// Set PA6 to alternate function for TIC/TOC
-	gpiob->MODER |= GPIO_Px3_MODER_AF;
-
-	// Set PA6 to alternate function in Alternate Function Register Low
-	// (for GPIO pins 0 - 7)
-	gpiob->AFRL = AFRL_Px3_AF1;
-
-	// Open interrupt for TIM2
-	iser[0] = TIM2_POS;
+	/* Interrupt Settings */
+    // Open interrupt for TIM2
+    iser[0] = TIM2_POS;
 
     // Enable TIM8 interrupt in the NVIC
-	iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
+    iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
 
+    /* GPIO Settings */
+	// Set PA3 to alternate function for TIC/TOC
+	gpiob->MODER |= GPIO_Px3_MODER_AF;
+
+	// Set PA3 to alternate function in Alternate Function Register Low
+	gpiob->AFRL = AFRL_Px3_AF1;
+
+	/*Timer Settings */
 	// Set to TIC in compare compare mode register 1 in CC
 	tim2->CCMR1 = CC2S;
 
@@ -133,20 +133,24 @@ void monitor_init(void)
 	// Enable the interrupt on capture compare
 	tim2->DIER |= (CC2IE | CC1IE);
 
+	// Set the auto-reload value to the maximum for a 16-bit counter
+	tim2->ARR = CLOCK_CYCLES_500_US;
+
     // Enable the timer interrupt
     tim8->DIER |= UIE;
 
-    // Set the auto-reload value to the maximum for a 16-bit counter
-    tim2->ARR = MAX_16;
+    // Set the auto-reload value to achieve a period of 1.13 ms
+    tim8->ARR = THRESHOLD_TICKS-1;
 
+    /* Enable Timers */
 	// Enable the counter
 	tim2->CR1 |= CEN;
 
-	// Enable timer
-	tim14->CR1 |= CEN;
-
 	// Check Initial State
 	tim8->CR1 |= CEN;
+
+	// Enable timer
+	tim14->CR1 |= CEN;
 }
 
 
@@ -209,16 +213,21 @@ static void transmit(void)
  * 			free running counter.
  *
  */
-static void post_collision_delay(void)
+void post_collision_delay(void)
 {
-	// Reads count register from free running counter
-	uint32_t count = tim14->CNT;
+	if(busy_delay == YES)
+	{
+		// Reads count register from free running counter
+		uint32_t count = tim14->CNT;
 
-	// Scale count value by the scaler
-	uint32_t microSecDelay = count * TIM_TO_MICROSEC_SCALAR;
+		// Scale count value by the scaler
+		uint32_t microSecDelay = count * TIM_TO_MICROSEC_SCALAR;
 
-	// Delay by this randomized time
-	delay_us(microSecDelay);
+		// Delay by this randomized time
+		delay_us(microSecDelay);
+
+		busy_delay = NO;
+	}
 }
 
 /**
@@ -272,7 +281,7 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 						 // every half-bit period "500 us" for transmitter
 	{
-		if(transmission_data)
+		if(transmission_data && busy_delay == NO)
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
@@ -296,11 +305,13 @@ void TIM2_IRQHandler(void)
 		{
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
+			busy_delay = YES;
 		}
 		else if(state == IDLE)
 		{
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
+
 		}
 
 		tim2->SR= ~CC2IF; // Clear the interrupt flag manually/by software if

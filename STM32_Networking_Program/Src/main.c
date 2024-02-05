@@ -74,5 +74,6 @@ int main(void)
 	for(;;)
 	{
 		user_prompt();
+		post_collision_delay();
 	}
 }

@@ -60,6 +60,12 @@ typedef enum
     COLLISION
 }State;
 
+typedef enum
+{
+	YES,
+	NO
+}Delay;
+
 /*
  ******************************************************************************
  * Function Prototypes
@@ -68,7 +74,9 @@ typedef enum
 
 extern void monitor_init(void);
 extern void encode(char* msg);
-extern void TIM2_IRQHandler(void);
+extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);
+extern void TIM2_IRQHandler(void);
+
 
 #endif
