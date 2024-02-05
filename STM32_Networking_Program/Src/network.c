@@ -189,6 +189,7 @@ static void transmit(void)
 
 	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
+
 	gpiob->ODR |= transmission_data[current_bit];
 
 
@@ -271,8 +272,11 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 						 // every half-bit period "500 us" for transmitter
 	{
-		// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
-		transmit();
+		if(transmission_data)
+		{
+			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
+			transmit();
+		}
 
 		// Clear interrupt flag manually since not reading from
 		tim2->SR = ~CC1IF;
