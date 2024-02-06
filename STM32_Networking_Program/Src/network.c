@@ -214,7 +214,7 @@ static void transmit(void)
 
 	gpiob->ODR = (gpiob->ODR & ~(1 << 1)) | (transmission_data[current_bit] << 1);
 
-	if(current_bit >= sizeof(transmission_data))
+	if(current_bit >= transmission_len)
 	{
 		current_bit = 0;
 		// Frees transmission_data
