@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 // Project
@@ -169,13 +170,31 @@ void encode(char* msg) {
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
     int len = strlen(msg);
-    for(int i = 0; i < len; i++) {
-        for(int j = 0; j < CHAR_BIT; j++) {
+    for(int i = 0; i < len; i++)
+    {
+        for(int j = CHAR_BIT - 1; j >= 0; j--)
+        { // Start from the most significant bit
             int bit = (msg[i] >> j) & 1;
-            transmission_data[2*(i*CHAR_BIT + j)] = bit;
-            transmission_data[2*(i*CHAR_BIT + j) + 1] = (bit ^ 1); // Use XOR to flip the bit
+            transmission_data[2*((i+1)*CHAR_BIT - j - 1)] = bit ^ 1; // Use XOR to flip the bit
+            transmission_data[2*((i+1)*CHAR_BIT - j - 1) + 1] = bit;
         }
     }
+
+// Uncomment below to check transmission_data
+//    printf("\n");
+//    // Output the encoded bits with spaces
+//    for(int i = 0; i < transmission_len; i++)
+//    {
+//        printf("%d", transmission_data[i]);
+//        if((i+1)%16 == 0)
+//        {
+//        	printf("    ");
+//        }else if ((i + 1) % 2 == 0)
+//        {
+//            printf(" "); // Add a space after every pair of bits
+//        }
+//    }
+//    printf("\n");
 }
 
 
@@ -188,7 +207,7 @@ void encode(char* msg) {
  */
 static void transmit(void)
 {
-	static int current_bit = 0;
+	int current_bit = 0;
 
 	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
@@ -197,12 +216,14 @@ static void transmit(void)
 
 	if(current_bit >= sizeof(transmission_data))
 	{
+		current_bit = 0;
 		// Frees transmission_data
 		free(transmission_data);
 
 		// Set to NULL
 		transmission_data = NULL;
 	}
+	current_bit++;
 
 }
 
