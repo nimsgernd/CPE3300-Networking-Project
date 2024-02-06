@@ -264,7 +264,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if (tim8_cnt == 0)
+    	if (tim2_cnt == 0)
     	{
     		// Check line state. High = idle, Low = collision
     		if (gpiob->IDR & GPIO_IDR_Px3)
@@ -280,7 +280,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
     	}
 
     	// Reset count variable
-    	tim8_cnt = 0;
+    	tim2_cnt = 0;
 
         // Clear the update interrupt flag
     	tim8->SR &= ~UIF;
@@ -298,9 +298,9 @@ void TIM8_UP_TIM13_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
-						 // every half-bit period "500 us" for transmitter
+								 // every half-bit period "500 us" for transmitter
 	{
-		if(transmission_data && busy_delay == NO && state == IDLE)
+		if(transmission_data && busy_delay == NO)
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
@@ -309,8 +309,7 @@ void TIM2_IRQHandler(void)
 		// Clear interrupt flag manually since not reading from
 		tim2->SR = ~CC1IF;
 	}
-	else if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 2
-
+	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 2
 	{
 		// Store count values at the time of the most recent edge
 		tim2_cnt = tim2->CCR2;

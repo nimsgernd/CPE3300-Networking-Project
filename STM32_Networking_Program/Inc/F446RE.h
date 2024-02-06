@@ -95,7 +95,7 @@
 // This bit is set by hardware on a capture. It is cleared by software or by
 // reading the TIMx_CCR1 register
 #define CC1IF 1 << 1 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
-#define CC2IF 1 << 1
+#define CC2IF 1 << 2
 
 /*
  ******************************************************************************
@@ -132,7 +132,7 @@
 
 #define GPIO_Px3_MODER_AF MODER_AF << 6
 #define GPIO_Px15_MODER_AF MODER_AF << 30
-#define GPIO_Px1_MODER_OUT MODER_OUT << 1
+#define GPIO_Px1_MODER_OUT MODER_OUT << 2
 
 // Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
 // for TIC/TOC.

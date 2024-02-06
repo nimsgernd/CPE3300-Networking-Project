@@ -78,5 +78,4 @@ extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);
 extern void TIM2_IRQHandler(void);
 
-
 #endif
