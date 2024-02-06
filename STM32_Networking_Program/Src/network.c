@@ -75,6 +75,8 @@ static int transmission_len = 0;
  ******************************************************************************
  */
 
+static void transmit(void);
+
 /*
  ******************************************************************************
  * Function Definitions
@@ -87,70 +89,75 @@ static int transmission_len = 0;
  */
 void monitor_init(void)
 {
+	/* External Initializers */
+	// Initialize LED bar
+	led_init();
+
 	/* RCC Settings */
-		// Enable clock for GPIOB
-		rcc->AHB1ENR |= GPIOBEN;
+	// Enable clock for GPIOB
+	rcc->AHB1ENR |= GPIOBEN;
 
-		// Enable clock for tim2
-		rcc->APB1ENR |= TIM2EN;
+	// Enable clock for tim2
+	rcc->APB1ENR |= TIM2EN;
 
-	    // Enable clock for tim8
-	    rcc->APB2ENR |= TIM8EN;
+	// Enable clock for tim8
+	rcc->APB2ENR |= TIM8EN;
 
-		// Enable clock for tim14
-		rcc->APB1ENR |= TIM14EN;
+	// Enable clock for tim14
+	rcc->APB1ENR |= TIM14EN;
 
-		/* Interrupt Settings */
-	    // Open interrupt for TIM2
-	    iser[0] = TIM2_POS;
+	/* Interrupt Settings */
+	// Open interrupt for TIM2
+	iser[0] = TIM2_POS;
 
-	    // Enable TIM8 interrupt in the NVIC
-	    iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
+	// Enable TIM8 interrupt in the NVIC
+	iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
 
-	    /* GPIO Settings */
-		// Set PA3 to alternate function for TIC/TOC
-		gpiob->MODER |= GPIO_Px3_MODER_AF | GPIO_Px1_MODER_OUT;
+	/* GPIO Settings */
+	// Set PA3 to alternate function for TIC/TOC
+	gpiob->MODER |= GPIO_MODER_Px3_AF | GPIO_MODER_Px1_OUT;
 
-		// Set PA3 to alternate function in Alternate Function Register Low
-		gpiob->AFRL = AFRL_Px3_AF1;
+	// Set PA3 to alternate function in Alternate Function Register Low
+	gpiob->AFRL = GPIO_AFRL_Px3_AF1;
 
-	gpiob->PUPDR |= (0b01 << 6);
+	// Set pull up for PB3
+	gpiob->PUPDR |= GPIO_PUPDR_Px3_UP;
 
 	/*Timer Settings */
-		// Set to TIC in compare compare mode register 1 in CC
-		tim2->CCMR1 = CC2S;
+	// Set to TIC in compare compare mode register 1 in CC
+	tim2->CCMR1 = CC2S;
 
-		// Enable the capture compare for the channel
-		tim2->CCER |= CC2E;
+	// Enable the capture compare for the channel
+	tim2->CCER |= CC2E;
 
-	    // Set the compare value for channel 1 to the number of clock cycles in 500us
-		tim2->CCR1 = CLOCK_CYCLES_500_US;
+	// Set the compare value for channel 1 to the number of clock cycles in 500us
+	tim2->CCR1 = CLOCK_CYCLES_500_US;
 
-		// Set the direction of the input capture
-		// (rising edge, falling edge, or both)
-		tim2->CCER |= (CC2P | CC2NP); // Trigger on rising (CC1P)
+	// Set the direction of the input capture
+	// (rising edge, falling edge, or both)
+	tim2->CCER |= (CC2P | CC2NP); // Trigger on rising (CC1P)
 									//          + falling edges (CC1NP)
-		// Enable the interrupt on capture compare
-		tim2->DIER |= (CC2IE | CC1IE);
+	// Enable the interrupt on capture compare
+	tim2->DIER |= (CC2IE | CC1IE);
 
-		// Set the auto-reload value to the maximum for a 16-bit counter
-		tim2->ARR = CLOCK_CYCLES_500_US;
+	// Set the auto-reload value to the maximum for a 16-bit counter
+	tim2->ARR = CLOCK_CYCLES_500_US;
 
-	    // Enable the timer interrupt
-	    tim8->DIER |= UIE;
+	// Enable the timer interrupt
+	tim8->DIER |= UIE;
 
-	    // Set the auto-reload value to achieve a period of 1.13 ms
-	    tim8->ARR = THRESHOLD_TICKS-1;
+	// Set the auto-reload value to achieve a period of 1.13 ms
+	tim8->ARR = THRESHOLD_TICKS-1;
 
-	    /* Enable Timers */
-		// Enable the counter
-		tim2->CR1 |= CEN;
+	/* Enable Timers */
+	// Enable the counter
+	tim2->CR1 |= CEN;
 
-		// Check Initial State
-		tim8->CR1 |= CEN;
+	// Check Initial State
+	tim8->CR1 |= CEN;
 
-		// Enable timer
-		tim14->CR1 |= CEN;
+	// Enable timer
+	tim14->CR1 |= CEN;
 }
 
 /**
@@ -207,7 +214,7 @@ static void transmit(void)
 	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
 
-	gpiob->ODR = (gpiob->ODR & ~(1 << 1)) | (transmission_data[current_bit] << 1);
+	gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1);
 
 	if(current_bit >= transmission_len)
 	{
@@ -237,6 +244,8 @@ void post_collision_delay(void)
 
 	// Delay by this randomized time
 	delay_us(microSecDelay);
+
+	busy_delay = NO;
 }
 
 /**
@@ -308,6 +317,8 @@ void TIM2_IRQHandler(void)
 		{
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
+//			busy_delay = YES;	// TODO: Enable once retransmit functionality
+								// 		 is added.
 		}
 		else if(state == IDLE)
 		{

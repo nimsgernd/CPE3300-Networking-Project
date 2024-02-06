@@ -33,10 +33,10 @@
 // Library
 
 // Project
+#include "console.h"
 #include "delay.h"
 #include "led.h"
-#include <network.h>
-#include "uart_driver.h"
+#include "network.h"
 
 /*
  ******************************************************************************
@@ -58,13 +58,17 @@
  */
 int main(void)
 {
-
-	led_init();
+	// Initialize CPE3300 network monitor
 	monitor_init();
+
+	// Initialize program console
+	console_init();
 
     /* Loop forever */
 	for(;;)
 	{
-
+//		user_promt();	// Take input from user
+		post_collision_delay();	// Check if delay is needed TODO: may need to
+								// be relocated
 	}
 }
