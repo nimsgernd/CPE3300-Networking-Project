@@ -67,7 +67,7 @@ int main(void)
     /* Loop forever */
 	for(;;)
 	{
-//		user_promt();	// Take input from user
+		user_prompt();	// Take input from user
 		post_collision_delay();	// Check if delay is needed TODO: may need to
 								// be relocated
 	}
