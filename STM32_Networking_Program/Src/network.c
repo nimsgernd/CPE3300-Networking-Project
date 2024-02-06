@@ -264,7 +264,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if (tim2_cnt == 0)
+    	if (tim8_cnt == 0)
     	{
     		// Check line state. High = idle, Low = collision
     		if (gpiob->IDR & GPIO_IDR_Px3)
@@ -280,7 +280,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
     	}
 
     	// Reset count variable
-    	tim2_cnt = 0;
+    	tim8_cnt = 0;
 
         // Clear the update interrupt flag
     	tim8->SR &= ~UIF;
