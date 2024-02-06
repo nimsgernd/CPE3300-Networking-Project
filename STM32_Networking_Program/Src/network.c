@@ -111,7 +111,7 @@ void monitor_init(void)
 
     /* GPIO Settings */
 	// Set PA3 to alternate function for TIC/TOC
-	gpiob->MODER |= GPIO_Px3_MODER_AF;
+	gpiob->MODER |= GPIO_Px3_MODER_AF | GPIO_Px1_MODER_OUT;
 
 	// Set PA3 to alternate function in Alternate Function Register Low
 	gpiob->AFRL = AFRL_Px3_AF1;
@@ -163,18 +163,17 @@ void monitor_init(void)
 
 
 void encode(char* msg) {
+    // Make sure to have enough size for Manchester encoding i.e., 2*bits
+    transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
+    transmission_len = 2 * strlen(msg) * CHAR_BIT;
 
-	// Make sure to have enough size for Manchester encoding i.e. 2*bits
-	transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
-	transmission_len = 2 * strlen(msg) * CHAR_BIT;
-
-	// Convert every bit to Manchester pair i.e. bit 0 = bit to transmit bit 1 = ~bit0
+    // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
     int len = strlen(msg);
     for(int i = 0; i < len; i++) {
         for(int j = 0; j < CHAR_BIT; j++) {
             int bit = (msg[i] >> j) & 1;
             transmission_data[2*(i*CHAR_BIT + j)] = bit;
-            transmission_data[2*(i*CHAR_BIT + j) + 1] = ~bit & 1; // Use bitwise AND to ensure the result is 0 or 1
+            transmission_data[2*(i*CHAR_BIT + j) + 1] = (bit ^ 1); // Use XOR to flip the bit
         }
     }
 }
@@ -194,8 +193,7 @@ static void transmit(void)
 	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
 
-	gpiob->ODR |= transmission_data[current_bit];
-
+	gpiob->ODR = (gpiob->ODR & ~(1 << 1)) | (transmission_data[current_bit] << 1);
 
 	if(current_bit >= sizeof(transmission_data))
 	{
@@ -281,7 +279,7 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 						 // every half-bit period "500 us" for transmitter
 	{
-		if(transmission_data && busy_delay == NO)
+		if(transmission_data && busy_delay == NO && state == IDLE)
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();

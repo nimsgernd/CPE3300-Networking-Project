@@ -78,7 +78,7 @@ void user_prompt(void)
 	fgets(str, 99, stdin);
 	token1 = strtok(str," ");
 	printf("token1 = '%s'\n", token1);
-	token2 = strtok(NULL," ");
+	token2 = strtok(NULL,"\n");
 	if(!strcmp(token1,"xmit")){
 		//TODO put tranmit func here
 		encode(token2);

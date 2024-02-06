@@ -132,6 +132,7 @@
 
 #define GPIO_Px3_MODER_AF MODER_AF << 6
 #define GPIO_Px15_MODER_AF MODER_AF << 30
+#define GPIO_Px1_MODER_OUT MODER_OUT << 1
 
 // Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
 // for TIC/TOC.
