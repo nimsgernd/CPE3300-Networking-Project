@@ -76,16 +76,16 @@ void user_prompt(void)
 	printf("net> ");
 	fgets(str, 99, stdin);
 	token1 = strtok(str," ");
-	printf("token1 = '%s'\n", token1);
-	token2 = strtok(NULL,"\n");
+	printf("token1 = '%s'\n\r", token1);
+	token2 = strtok(NULL,"\n\r");
 	if(!strcmp(token1,"xmit")){
 		//TODO put tranmit func here
 		encode(token2);
-		printf("transmitting '%s'...\n",token2);
+		printf("transmitting '%s'...\n\r",token2);
 	} else if(!strcmp(token1,"signal_1k\n")){
-		printf("transmitting 1KHz square wave for 5 seconds...\n");
+		printf("transmitting 1KHz square wave for 5 seconds...\n\r");
 	} else {
-		printf("ERR: unknown command.\n");
+		printf("ERR: unknown command.\n\r");
 	}
 
 }
