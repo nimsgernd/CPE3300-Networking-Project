@@ -166,15 +166,58 @@
 #define GPIO_ODR_Px14	~(1 << 14)
 #define GPIO_ODR_Px15	~(1 << 15)
 
-// Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
-// for TIC/TOC.
-// [0 = disabled, 1 = enabled]
-#define AFRx_1			0b0001
+/* ALternate Function Settings */
+// Modes
+#define AF_0	0b0000
+#define AF_1	0b0001
+#define AF_2	0b0010
+#define AF_3	0b0011
+#define AF_4	0b0100
+#define AF_5	0b0101
+#define AF_6	0b0110
+#define AF_7	0b0111
+#define AF_8	0b1000
+#define AF_9	0b1001
+#define AF_10	0b1010
+#define AF_11	0b1011
+#define AF_12	0b1100
+#define AF_13	0b1101
+#define AF_14	0b1110
+#define AF_15	0b1111
 
-#define GPIO_AFRL_Px3_AF1	AFRx_1 << 12
-#define GPIO_AFRH_Px15_AF1	AFRx_1 << 28
+// Alternate Function 0
 
+// Alternate Function 1
+#define GPIO_AFRL_Px3_AF1	AF_1 << 12
+#define GPIO_AFRH_Px15_AF1	AF_1 << 28
 
+// Alternate Function 2
+
+// Alternate Function 3
+
+// Alternate Function 4
+
+// Alternate Function 5
+
+// Alternate Function 6
+
+// Alternate Function 7
+
+// Alternate Function 8
+
+// Alternate Function 9
+
+// Alternate Function 10
+
+// Alternate Function 11
+
+// Alternate Function 12
+
+// Alternate Function 13
+
+// Alternate Function 14
+
+// Alternate Function 15
 
 /*
  ******************************************************************************
