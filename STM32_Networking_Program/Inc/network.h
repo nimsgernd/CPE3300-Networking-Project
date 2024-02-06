@@ -8,8 +8,8 @@
  ******************************************************************************
  */
 
-#ifndef MONITOR_H_
-#define MONITOR_H_
+#ifndef NETWORK_H_
+#define NETWORK_H_
 
 /*
  ******************************************************************************
@@ -53,12 +53,18 @@
  ******************************************************************************
  */
 
-enum State 
+typedef enum
 {
     BUSY,
     IDLE,
     COLLISION
-};
+}State;
+
+typedef enum
+{
+	YES,
+	NO
+}Delay;
 
 /*
  ******************************************************************************
@@ -66,7 +72,10 @@ enum State
  ******************************************************************************
  */
 
-void monitor_init(void);
-void monitor(void);
+extern void monitor_init(void);
+extern void encode(char* msg);
+extern void post_collision_delay(void);
+extern void TIM8_UP_TIM13_IRQHandler(void);
+extern void TIM2_IRQHandler(void);
 
 #endif

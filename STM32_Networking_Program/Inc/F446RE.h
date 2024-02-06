@@ -9,8 +9,8 @@
  ******************************************************************************
  */
 
-#ifndef GPIO_H_
-#define GPIO_H_
+#ifndef F446RE_H_
+#define F446RE_H_
 
 /*
  ******************************************************************************
@@ -95,7 +95,7 @@
 // This bit is set by hardware on a capture. It is cleared by software or by
 // reading the TIMx_CCR1 register
 #define CC1IF 1 << 1 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
-#define CC2IF 1 << 1
+#define CC2IF 1 << 2
 
 /*
  ******************************************************************************
@@ -132,6 +132,7 @@
 
 #define GPIO_Px3_MODER_AF MODER_AF << 6
 #define GPIO_Px15_MODER_AF MODER_AF << 30
+#define GPIO_Px1_MODER_OUT MODER_OUT << 2
 
 // Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
 // for TIC/TOC.
@@ -219,6 +220,28 @@ typedef struct {
 	volatile uint32_t AFRH;
 }GPIO;
 
+typedef struct{
+	volatile uint32_t CR1;
+	volatile uint32_t CR2;
+	volatile uint32_t SMCR;
+	volatile uint32_t DIER;
+	volatile uint32_t SR;
+	volatile uint32_t EGR;
+	volatile uint32_t CCMR1;
+	volatile uint32_t CCMR2;
+	volatile uint32_t CCER;
+	volatile uint32_t CNT;
+	volatile uint32_t PSC;
+	volatile uint32_t ARR;
+	volatile uint32_t RCR;
+	volatile uint32_t CCR1;
+	volatile uint32_t CCR2;
+	volatile uint32_t CCR3;
+	volatile uint32_t CCR4;
+	volatile uint32_t BDTR;
+	volatile uint32_t DCR;
+	volatile uint32_t DMAR;
+}ACTIM16B;
 
 typedef struct{
 	volatile uint32_t CR1;
@@ -238,7 +261,7 @@ typedef struct{
 	volatile uint32_t CCR2;
 	volatile uint32_t CCR3;
 	volatile uint32_t CCR4;
-	const uint32_t RESERVED2;
+	const uint32_t RESERVED1;
 	volatile uint32_t DCR;
 	volatile uint32_t DMAR;
 	volatile uint32_t TIM2_OR;
@@ -268,6 +291,21 @@ typedef struct{
 	const uint32_t RESERVED8;
 	volatile uint32_t OR;
 }GPTIM16B;
+
+typedef struct{
+	volatile uint32_t CR1;
+	volatile uint32_t CR2;
+	const uint32_t RESERVED;
+	volatile uint32_t DIER;
+	volatile uint32_t SR;
+	volatile uint32_t EGR;
+	const uint32_t RESERVED1;
+	const uint32_t RESERVED2;
+	const uint32_t RESERVED3;
+	volatile uint32_t CNT;
+	volatile uint32_t PSC;
+	volatile uint32_t ARR;
+}BTIM16B;
 
 typedef struct{
 	volatile uint32_t TR;
@@ -312,4 +350,4 @@ typedef struct{
 }EXTI;
 
 
-#endif /* GPIO_H_ */
+#endif /* F446RE_H_ */
