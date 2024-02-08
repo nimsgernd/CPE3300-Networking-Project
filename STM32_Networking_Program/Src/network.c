@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
@@ -70,6 +71,10 @@ static volatile char was_edge = 0;
 // Manchester Encoded Transmission Data
 static int* transmission_data = NULL;
 static int transmission_len = 0;
+
+// Bit tracker for transmit function
+static int current_bit = 0;
+static int start_transmitting = 0;	// 0 = No IDLE state to start, 1 = IDLE state to start
 
 /*
  ******************************************************************************
@@ -211,13 +216,13 @@ void encode(char* msg) {
  */
 static void transmit(void)
 {
-	int current_bit = 0;
-
 	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
-
-	gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1);
-
+	if(transmission_data != NULL)
+	{
+		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1);
+		current_bit++;
+	}
 	if(current_bit >= transmission_len)
 	{
 		current_bit = 0;
@@ -227,7 +232,6 @@ static void transmit(void)
 		// Set to NULL
 		transmission_data = NULL;
 	}
-	current_bit++;
 
 }
 
@@ -268,11 +272,13 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		if (gpiob->IDR & GPIO_IDR_Px3)
     		{
     			state = IDLE;
+    			start_transmitting = 1;		// Transmission may only start in IDLE
     		    led_enable(IDLE_LED_STATE); // Enables left most LED
     		}
     		else
     		{
     		    state = COLLISION;
+    		    start_transmitting = 0;
     		    led_enable(COLLISION_LED_STATE); // Enables third to left LED
     		}
     	}
@@ -296,7 +302,9 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 									 // every half-bit period "500 us" for transmitter
 	{
-		if(transmission_data && busy_delay == NO)
+		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
+		// transmit in COLLISION
+		if(transmission_data && busy_delay == NO && start_transmitting)
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
