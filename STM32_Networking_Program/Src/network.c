@@ -11,7 +11,9 @@
  */
 
 /**
- * IMPORTANT: INPUT SIGNAL ASSUMED TO BE ON ARDUINO HEADER/PIN PA_15!!!!
+ * PINS:
+ *	PB1 - Channel Monitor
+ *	PB3 - Transmitter
  */
 
 /*
@@ -117,7 +119,7 @@ void monitor_init(void)
 	// Set PA3 to alternate function for TIC/TOC
 	gpiob->MODER |= GPIO_MODER_Px3_AF | GPIO_MODER_Px1_OUT;
 
-	// Set PA3 to alternate function in Alternate Function Register Low
+	// Set PB3 to alternate function in Alternate Function Register Low
 	gpiob->AFRL = GPIO_AFRL_Px3_AF1;
 
 	// Set pull up for PB3
