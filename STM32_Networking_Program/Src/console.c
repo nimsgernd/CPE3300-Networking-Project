@@ -62,7 +62,7 @@ void console_init(void)
 {
 
 	// Initialize UART connection
-	init_usart2(57600, F_CPU);
+	init_usart2(921600, F_CPU);
 
 }
 
