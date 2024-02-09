@@ -30,7 +30,6 @@
 #include <math.h>
 #include <string.h>
 
-
 // Project
 #include "delay.h"
 #include "F446RE.h"
@@ -147,6 +146,7 @@ void monitor_init(void)
 	// (rising edge, falling edge, or both)
 	tim2->CCER |= (CC2P | CC2NP); // Trigger on rising (CC1P)
 									//          + falling edges (CC1NP)
+    
 	// Enable the interrupt on capture compare
 	tim2->DIER |= (CC2IE | CC1IE);
 
@@ -176,6 +176,7 @@ void monitor_init(void)
  * @returns Pointer to encoded data array
  *
  */
+
 void encode(char* msg) {
     // Make sure to have enough size for Manchester encoding i.e., 2*bits
     transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
@@ -243,7 +244,6 @@ static void transmit(void)
 		// Set to NULL
 		transmission_data = NULL;
 	}
-
 }
 
 /**
@@ -347,7 +347,6 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
 		}
-
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
 	}

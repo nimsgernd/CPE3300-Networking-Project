@@ -31,6 +31,8 @@
  */
 
 // Library
+#include <stdio.h>
+#include <stdlib.h>
 
 // Project
 #include "console.h"
