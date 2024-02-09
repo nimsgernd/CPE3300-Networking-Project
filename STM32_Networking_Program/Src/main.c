@@ -73,4 +73,6 @@ int main(void)
 		post_collision_delay();	// Check if delay is needed TODO: may need to
 								// be relocated
 	}
+	// Free dynamic memory
+	clear();
 }
