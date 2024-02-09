@@ -235,6 +235,9 @@ static void transmit(void)
 
 		// Done transmitting
 		is_transmitting = 0;
+
+		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
+
 	}
 
 }
@@ -281,6 +284,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		else
     		{
     		    state = COLLISION;
+    			gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
+
     		    is_transmitting = 0;
     		    led_enable(COLLISION_LED_STATE); // Enables third to left LED
     		}
