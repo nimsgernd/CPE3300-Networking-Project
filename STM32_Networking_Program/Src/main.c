@@ -39,7 +39,6 @@
 #include "delay.h"
 #include "led.h"
 #include "network.h"
-#include "F446RE.h"
 
 /*
  ******************************************************************************
@@ -61,9 +60,6 @@
  */
 int main(void)
 {
-	// Initialize LED bar
-	led_init();
-
 	// Initialize CPE3300 network monitor
 	monitor_init();
 
@@ -73,7 +69,8 @@ int main(void)
     /* Loop forever */
 	for(;;)
 	{
-		user_prompt();
-		post_collision_delay();
+		user_prompt();	// Take input from user
+		post_collision_delay();	// Check if delay is needed TODO: may need to
+								// be relocated
 	}
 }

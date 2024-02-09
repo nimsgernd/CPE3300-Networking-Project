@@ -1,9 +1,9 @@
 /**
  ******************************************************************************
- * @file	: monitor.h
+ * @file	: console.h
  * @authors	: File created by	Daniel Nimsgern	<nimsgernd@msoe.edu>
  * 			:
- * @brief 	: State enumerations and function prototypes for monitor.c
+ * @brief 	:
  ******************************************************************************
  */
 

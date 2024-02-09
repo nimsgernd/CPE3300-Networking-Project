@@ -39,15 +39,15 @@
  ******************************************************************************
  */
 
-#define RCC_BASE	0x40023800
-#define GPIOB_BASE	0x40020400
-#define GPIOA_BASE	0x40020000
-#define TIM2_BASE 	0x40000000
-#define TIM8_BASE 	0x40010400
-#define TIM14_BASE	0x40002000
-#define RTC_BASE	0x40002800
-#define NVIC_BASE	0xE000E100
-#define NVIC_ISER1	0xE000E104
+#define RCC_BASE			0x40023800
+#define GPIOB_BASE			0x40020400
+#define GPIOA_BASE			0x40020000
+#define TIM2_BASE 			0x40000000
+#define TIM8_BASE 			0x40010400
+#define TIM14_BASE			0x40002000
+#define RTC_BASE			0x40002800
+#define NVIC_BASE			0xE000E100
+#define NVIC_ISER1			0xE000E104
 #define SYSCFG_EXTICR2_BASE 0x4001380C
 
 /*
@@ -57,45 +57,45 @@
  */
 
 // Clock enable bit in TIM control register (CR)
-#define CEN 1<<0	// [0 = disabled, 1 = enabled]
+#define CEN	1<<0	// [0 = disabled, 1 = enabled]
 
-#define UIE 1 << 0		// Timer interrupt enable [0 = disabled, 1 = enabled]
-#define UIF 1 <<0		// Update Interrupt flag
+#define UIE	1 << 0		// Timer interrupt enable [0 = disabled, 1 = enabled]
+#define UIF	1 <<0		// Update Interrupt flag
 
 // RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4)
-#define TIM2EN 1 << 0	// [0 = disabled, 1 = enabled]
-#define TIM8EN 1 << 1
-#define TIM14EN 1 << 8	// [0 = disabled, 1 = enabled]
+#define TIM2EN 	1 << 0	// [0 = disabled, 1 = enabled]
+#define TIM8EN 	1 << 1
+#define TIM14EN	1 << 8	// [0 = disabled, 1 = enabled]
 
 // NVIC position of 16-bit timers (TIM3 and TIM4)
-#define TIM2_POS 1 << 28	// [0 = disabled, 1 = enabled]
-#define TIM8_UP_TIM13_POS 44
+#define TIM2_POS 			1 << 28	// [0 = disabled, 1 = enabled]
+#define TIM8_UP_TIM13_POS 	44
 
 // Capture/Compare 1 interrupt enable for channel 1
-#define CC1IE 1 << 1	// [0 = disabled, 1 = enabled]
-#define CC2IE 1 << 2
+#define CC1IE	1 << 1	// [0 = disabled, 1 = enabled]
+#define CC2IE	1 << 2
 
 // CCMR to configure TIM3 to Timer Input Capture TIC
-#define CC1S 1 << 0	// [0 = CC1 channel is configured as output, 1 = CC1 channel is configured as input, IC1 is mapped on TI1]
-#define CC2S 0b01 << 8
+#define CC1S	1 << 0	// [0 = CC1 channel is configured as output, 1 = CC1 channel is configured as input, IC1 is mapped on TI1]
+#define CC2S	0b01 << 8
 
 // Capture Compare 1 Enable bit in CCER
-#define CC1E 1 << 0	// [0  = disabled, 1 = enabled]
-#define CC2E 1 << 4
+#define CC1E	1 << 0	// [0  = disabled, 1 = enabled]
+#define CC2E	1 << 4
 
 // Capture Compare 1 Polarity for Capture/Compare on high
-#define CC1P 1 << 0
-#define CC2P 1 << 5
+#define CC1P	1 << 0
+#define CC2P	1 << 5
 
 // Capture Compare 1 Complimentary output enable
-#define CC1NP 1 << 0
-#define CC2NP 1 << 7
+#define CC1NP	1 << 0
+#define CC2NP	1 << 7
 
 // Capture Compare 1 Interrupt Flag
 // This bit is set by hardware on a capture. It is cleared by software or by
 // reading the TIMx_CCR1 register
-#define CC1IF 1 << 1 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
-#define CC2IF 1 << 2
+#define CC1IF	1 << 1 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
+#define CC2IF	1 << 2
 
 /*
  ******************************************************************************
@@ -104,9 +104,33 @@
  */
 
 // RCC AHB1 peripheral clock enable register GPIO Enable bits
-#define GPIOAEN 1<<0	// [0  = disabled, 1 = enabled]
-#define GPIOBEN 1<<1	// [0  = disabled, 1 = enabled]
+#define GPIOAEN	1 << 0	// [0  = disabled, 1 = enabled]
+#define GPIOBEN 1 << 1	// [0  = disabled, 1 = enabled]
 
+/* MODER Settings */
+// Modes
+#define MODER_IN	0b00
+#define MODER_OUT	0b01
+#define MODER_AF	0b10
+#define MODER_ALOG	0b11
+
+// Output
+#define GPIO_MODER_Px1_OUT	MODER_OUT << 2
+
+// Alternate Function
+#define GPIO_MODER_Px3_AF	MODER_AF << 6
+#define GPIO_MODER_Px15_AF	MODER_AF << 30
+
+/* PUPDR Settings */
+// Modes
+#define PUPDR_NONE	0b00
+#define PUPDR_UP	0b01
+#define PUPDR_DOWN	0b10
+
+// Pull Up
+#define GPIO_PUPDR_Px3_UP	PUPDR_UP << 6
+
+/* IDR Reg */
 #define GPIO_IDR_Px0	1 << 0
 #define GPIO_IDR_Px1	1 << 1
 #define GPIO_IDR_Px2	1 << 2
@@ -124,25 +148,76 @@
 #define GPIO_IDR_Px14	1 << 14
 #define GPIO_IDR_Px15	1 << 15 // GPIO_IDR PA15 bit
 
-// GPIO MODER SETTINGS
-#define MODER_IN	0b00
-#define MODER_OUT	0b01
-#define MODER_AF	0b10
-#define MODER_ALOG	0b11
+/* ODR Reg */
+#define GPIO_ODR_Px0	~(1 << 0)
+#define GPIO_ODR_Px1	~(1 << 1)
+#define GPIO_ODR_Px2	~(1 << 2)
+#define GPIO_ODR_Px3	~(1 << 3)
+#define GPIO_ODR_Px4	~(1 << 4)
+#define GPIO_ODR_Px5	~(1 << 5)
+#define GPIO_ODR_Px6	~(1 << 6)
+#define GPIO_ODR_Px7	~(1 << 7)
+#define GPIO_ODR_Px8	~(1 << 8)
+#define GPIO_ODR_Px9	~(1 << 9)
+#define GPIO_ODR_Px10	~(1 << 10)
+#define GPIO_ODR_Px11	~(1 << 11)
+#define GPIO_ODR_Px12	~(1 << 12)
+#define GPIO_ODR_Px13	~(1 << 13)
+#define GPIO_ODR_Px14	~(1 << 14)
+#define GPIO_ODR_Px15	~(1 << 15)
 
-#define GPIO_Px3_MODER_AF MODER_AF << 6
-#define GPIO_Px15_MODER_AF MODER_AF << 30
-#define GPIO_Px1_MODER_OUT MODER_OUT << 2
+/* ALternate Function Settings */
+// Modes
+#define AF_0	0b0000
+#define AF_1	0b0001
+#define AF_2	0b0010
+#define AF_3	0b0011
+#define AF_4	0b0100
+#define AF_5	0b0101
+#define AF_6	0b0110
+#define AF_7	0b0111
+#define AF_8	0b1000
+#define AF_9	0b1001
+#define AF_10	0b1010
+#define AF_11	0b1011
+#define AF_12	0b1100
+#define AF_13	0b1101
+#define AF_14	0b1110
+#define AF_15	0b1111
 
-// Alternate Function bit enable position for TIM3..5. Set in GPIO_AFRH/AFRL
-// for TIC/TOC.
-// [0 = disabled, 1 = enabled]
-#define AFRx_1			0b0001
+// Alternate Function 0
 
-#define AFRL_Px3_AF1	AFRx_1 << 12
-#define AFRH_Px15_AF1	AFRx_1 << 28
+// Alternate Function 1
+#define GPIO_AFRL_Px3_AF1	AF_1 << 12
+#define GPIO_AFRH_Px15_AF1	AF_1 << 28
 
+// Alternate Function 2
 
+// Alternate Function 3
+
+// Alternate Function 4
+
+// Alternate Function 5
+
+// Alternate Function 6
+
+// Alternate Function 7
+
+// Alternate Function 8
+
+// Alternate Function 9
+
+// Alternate Function 10
+
+// Alternate Function 11
+
+// Alternate Function 12
+
+// Alternate Function 13
+
+// Alternate Function 14
+
+// Alternate Function 15
 
 /*
  ******************************************************************************
@@ -350,4 +425,4 @@ typedef struct{
 }EXTI;
 
 
-#endif /* GPIO_H_ */
+#endif /* F446RE_H_ */

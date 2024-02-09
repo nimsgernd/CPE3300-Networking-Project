@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
- * @file	: monitor.c
+ * @file	: network.c
  * @authors	: Zack Kohlman		<kohlmanz@msoe.edu>
  *			: Jack Maki			<makij@msoe.edu>
  *			: Daniel Nimsgern	<nimsgern@msoe.edu>
@@ -11,7 +11,9 @@
  */
 
 /**
- * IMPORTANT: INPUT SIGNAL ASSUMED TO BE ON ARDUINO HEADER/PIN PA_15!!!!
+ * PINS:
+ *	PB1 - Channel Monitor
+ *	PB3 - Transmitter
  */
 
 /*
@@ -25,6 +27,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 // Project
@@ -45,7 +48,7 @@
 #define COLLISION_LED_STATE (int)0b0010000000 // Third to left LED value
 #define ERROR_LED_STATE (int)0b1111111111	  // ALL LED value
 #define MAX_16 0xFFFF
-#define HALF_BIT_PERIOD_500_US 500e-6	
+#define HALF_BIT_PERIOD_500_US 500e-6
 #define CLOCK_CYCLES_500_US (int)((F_CPU * HALF_BIT_PERIOD_500_US)-1)
 #define CHAR_BIT 8
 
@@ -58,17 +61,19 @@ static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 
 // State
-static State state = IDLE;	// Current state
+static State state = BUSY;	// Current state
 static Delay busy_delay = NO;	// Collision to Busy delay flag
 
 // Timer Variables
-static volatile uint32_t previous_edge_time = 0; // Time of previous edge
-static volatile uint16_t  tim2_cnt = 0; // used for storing the count in timer 2
-static volatile uint16_t  tim8_cnt = 0; // used for storing the count in timer 8
+static volatile char was_edge = 0;
 
 // Manchester Encoded Transmission Data
 static int* transmission_data = NULL;
 static int transmission_len = 0;
+
+// Bit tracker for transmit function
+static int current_bit = 0;
+static int is_transmitting = 1;	// 0 = No IDLE state to start, 1 = IDLE state to start
 
 /*
  ******************************************************************************
@@ -90,6 +95,10 @@ static void transmit(void);
  */
 void monitor_init(void)
 {
+	/* External Initializers */
+	// Initialize LED bar
+	led_init();
+
 	/* RCC Settings */
 	// Enable clock for GPIOB
 	rcc->AHB1ENR |= GPIOBEN;
@@ -97,25 +106,31 @@ void monitor_init(void)
 	// Enable clock for tim2
 	rcc->APB1ENR |= TIM2EN;
 
-    // Enable clock for tim8
-    rcc->APB2ENR |= TIM8EN;
+	// Enable clock for tim8
+	rcc->APB2ENR |= TIM8EN;
 
 	// Enable clock for tim14
 	rcc->APB1ENR |= TIM14EN;
 
 	/* Interrupt Settings */
-    // Open interrupt for TIM2
-    iser[0] = TIM2_POS;
+	// Open interrupt for TIM2
+	iser[0] = TIM2_POS;
 
-    // Enable TIM8 interrupt in the NVIC
-    iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
+	// Enable TIM8 interrupt in the NVIC
+	iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
 
-    /* GPIO Settings */
+	/* GPIO Settings */
 	// Set PA3 to alternate function for TIC/TOC
-	gpiob->MODER |= GPIO_Px3_MODER_AF | GPIO_Px1_MODER_OUT;
+	gpiob->MODER |= GPIO_MODER_Px3_AF | GPIO_MODER_Px1_OUT;
 
-	// Set PA3 to alternate function in Alternate Function Register Low
-	gpiob->AFRL = AFRL_Px3_AF1;
+	// Set PB3 to alternate function in Alternate Function Register Low
+	gpiob->AFRL = GPIO_AFRL_Px3_AF1;
+
+	// Set pull up for PB3
+	gpiob->PUPDR |= GPIO_PUPDR_Px3_UP;
+
+	// Set TX line high
+	gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
 
 	/*Timer Settings */
 	// Set to TIC in compare compare mode register 1 in CC
@@ -124,26 +139,27 @@ void monitor_init(void)
 	// Enable the capture compare for the channel
 	tim2->CCER |= CC2E;
 
-    // Set the compare value for channel 1 to the number of clock cycles in 500us
+	// Set the compare value for channel 1 to the number of clock cycles in 500us
 	tim2->CCR1 = CLOCK_CYCLES_500_US;
 
 	// Set the direction of the input capture
 	// (rising edge, falling edge, or both)
 	tim2->CCER |= (CC2P | CC2NP); // Trigger on rising (CC1P)
-								//          + falling edges (CC1NP)
+									//          + falling edges (CC1NP)
+    
 	// Enable the interrupt on capture compare
 	tim2->DIER |= (CC2IE | CC1IE);
 
 	// Set the auto-reload value to the maximum for a 16-bit counter
 	tim2->ARR = CLOCK_CYCLES_500_US;
 
-    // Enable the timer interrupt
-    tim8->DIER |= UIE;
+	// Enable the timer interrupt
+	tim8->DIER |= UIE;
 
-    // Set the auto-reload value to achieve a period of 1.13 ms
-    tim8->ARR = THRESHOLD_TICKS-1;
+	// Set the auto-reload value to achieve a period of 1.13 ms
+	tim8->ARR = THRESHOLD_TICKS-1;
 
-    /* Enable Timers */
+	/* Enable Timers */
 	// Enable the counter
 	tim2->CR1 |= CEN;
 
@@ -154,14 +170,12 @@ void monitor_init(void)
 	tim14->CR1 |= CEN;
 }
 
-
 /**
  * @brief	Manchester encodes the given char* into a bit array to be parsed
  *			inside transmit function. The bit array is Manchester encoded.
  * @returns Pointer to encoded data array
  *
  */
-
 
 void encode(char* msg) {
     // Make sure to have enough size for Manchester encoding i.e., 2*bits
@@ -197,7 +211,6 @@ void encode(char* msg) {
 //    printf("\n");
 }
 
-
 /**
  * @brief	Transmits the current bit pair in TIM2 CH1 ISR set at
  * 			500 uS.
@@ -207,13 +220,21 @@ void encode(char* msg) {
  */
 static void transmit(void)
 {
-	int current_bit = 0;
-
 	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
+	if(transmission_data != NULL)
+	{
+		is_transmitting = 1;
+		gpiob->ODR = ((gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1));
+		current_bit++;
+	}
+	else
+	{
+		// Done transmitting
+		is_transmitting = 0;
 
-	gpiob->ODR = (gpiob->ODR & ~(1 << 1)) | (transmission_data[current_bit] << 1);
-
+		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
+	}
 	if(current_bit >= transmission_len)
 	{
 		current_bit = 0;
@@ -223,8 +244,6 @@ static void transmit(void)
 		// Set to NULL
 		transmission_data = NULL;
 	}
-	current_bit++;
-
 }
 
 /**
@@ -234,19 +253,16 @@ static void transmit(void)
  */
 void post_collision_delay(void)
 {
-	if(busy_delay == YES)
-	{
-		// Reads count register from free running counter
-		uint32_t count = tim14->CNT;
+	// Reads count register from free running counter
+	uint32_t count = tim14->CNT;
 
-		// Scale count value by the scaler
-		uint32_t microSecDelay = count * TIM_TO_MICROSEC_SCALAR;
+	// Scale count value by the scaler
+	uint32_t microSecDelay = count * TIM_TO_MICROSEC_SCALAR;
 
-		// Delay by this randomized time
-		delay_us(microSecDelay);
+	// Delay by this randomized time
+	delay_us(microSecDelay);
 
-		busy_delay = NO;
-	}
+	busy_delay = NO;
 }
 
 /**
@@ -257,37 +273,35 @@ void post_collision_delay(void)
  */
 void TIM8_UP_TIM13_IRQHandler(void)
 {
-	// Turn timer off
-	tim8->CR1 &= ~CEN;
-
 	// Check if the update interrupt flag is set
 	if (tim8->SR & UIF)
 	{
 		// If count has not been updated
-    	if (tim8_cnt == 0)
+    	if (was_edge == 0 && state == BUSY)
     	{
     		// Check line state. High = idle, Low = collision
     		if (gpiob->IDR & GPIO_IDR_Px3)
     		{
     			state = IDLE;
-    			led_enable(IDLE_LED_STATE); // Enables left most LED
+    		    led_enable(IDLE_LED_STATE); // Enables left most LED
     		}
     		else
     		{
-    			state = COLLISION;
-    			led_enable(COLLISION_LED_STATE); // Enables third to left LED
+    		    state = COLLISION;
+    			gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
+
+    		    is_transmitting = 0;
+    		    led_enable(COLLISION_LED_STATE); // Enables third to left LED
     		}
     	}
 
     	// Reset count variable
-    	tim8_cnt = 0;
+    	was_edge = 0;
 
         // Clear the update interrupt flag
     	tim8->SR &= ~UIF;
 	}
 }
-
-
 
 // Timer 2 interrupt fires when the timer is active for over 1.13ms
 /**
@@ -298,9 +312,11 @@ void TIM8_UP_TIM13_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
-								 // every half-bit period "500 us" for transmitter
+									 // every half-bit period "500 us" for transmitter
 	{
-		if(transmission_data && busy_delay == NO)
+		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
+		// transmit in COLLISION
+		if(busy_delay == NO && (is_transmitting || state == IDLE))
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
@@ -309,11 +325,11 @@ void TIM2_IRQHandler(void)
 		// Clear interrupt flag manually since not reading from
 		tim2->SR = ~CC1IF;
 	}
-	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on channel 2
+	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on
+						  // channel 1
 	{
 		// Store count values at the time of the most recent edge
-		tim2_cnt = tim2->CCR2;
-		tim8_cnt = tim8->CCR1;
+		was_edge = 1;
 
 		// Once edge detected, start 1.13 ms timer
 		tim8->CR1 |= CEN;
@@ -323,16 +339,15 @@ void TIM2_IRQHandler(void)
 		{
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
-			busy_delay = YES;
+//			busy_delay = YES;	// TODO: Enable once retransmit functionality
+								// 		 is added.
 		}
 		else if(state == IDLE)
 		{
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
-
 		}
-
-		tim2->SR= ~CC2IF; // Clear the interrupt flag manually/by software if
+		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
 	}
 }

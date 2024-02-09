@@ -42,11 +42,13 @@
 
 // 1000 uS + 130 uS = 1130 uS total period
 #define ADJUSTED_SIGNAL_PERIOD_US (NOMINAL_SIGNAL_PERIOD_US + SIGNAL_PERIOD_TOLERANCE_US)
+
 // Frequency representing the adjusted period. f = 1/T = 884 Hz
 #define SIGNAL_TOLERANCE_FREQUENCY_HZ (int)(1/(long long)(ADJUSTED_SIGNAL_PERIOD_US * 1e-6))
 
 // Number of ticks = Timer frequency (Hz) * Desired period (s)
 #define THRESHOLD_TICKS (int)(F_CPU * (long long)ADJUSTED_SIGNAL_PERIOD_US*1e-6)-1
+
 /*
  ******************************************************************************
  * Enumerations

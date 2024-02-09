@@ -1,12 +1,11 @@
 /**
  ******************************************************************************
- * @file	: monitor.c
+ * @file	: console.c
  * @authors	: Zack Kohlman		<kohlmanz@msoe.edu>
  *			: Jack Maki			<makij@msoe.edu>
  *			: Daniel Nimsgern	<nimsgern@msoe.edu>
  * 			:
- * @brief	: Functions for initializing a network monitoring process and
- * 			: updating status LEDs.
+ * @brief	:
  ******************************************************************************
  */
 
@@ -26,20 +25,20 @@
 #include <string.h>
 
 // Project
-#include "uart_driver.h"
 #include "F446RE.h"
 #include "network.h"
+#include "uart_driver.h"
 
 /*
  ******************************************************************************
  * Variables
  ******************************************************************************
  */
+
 char str[100];
 char * token1;
 char * token2;
 char * token3;
-
 
 /*
  ******************************************************************************
@@ -63,7 +62,7 @@ void console_init(void)
 {
 
 	// Initialize UART connection
-	init_usart2(57600, F_CPU);
+	init_usart2(921600, F_CPU);
 
 }
 
@@ -77,16 +76,16 @@ void user_prompt(void)
 	printf("net> ");
 	fgets(str, 99, stdin);
 	token1 = strtok(str," ");
-	printf("token1 = '%s'\n", token1);
-	token2 = strtok(NULL,"\n");
-	if(!strcmp(token1,"xmit")){
+	printf("token1 = '%s'\n\r", token1);
+	token2 = strtok(NULL,"\n\r");
+	if(!strcmp(token1,"t")){
 		//TODO put tranmit func here
 		encode(token2);
-		printf("transmitting '%s'...\n",token2);
+		printf("transmitting '%s'...\n\r",token2);
 	} else if(!strcmp(token1,"signal_1k\n")){
-		printf("transmitting 1KHz square wave for 5 seconds...\n");
+		printf("transmitting 1KHz square wave for 5 seconds...\n\r");
 	} else {
-		printf("ERR: unknown command.\n");
+		printf("ERR: unknown command.\n\r");
 	}
 
 }
