@@ -91,6 +91,8 @@ typedef struct
 
 extern void monitor_init(void);
 extern void rx_init(void);
+extern void embiggen(void);
+extern void clear(void);
 extern void encode(char* msg);
 extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);

@@ -194,6 +194,26 @@ void rx_init(void)
 }
 
 /**
+ * @brief	Increases the receiving buffer by 5 bytes.
+ *
+ */
+void embiggen(void)
+{
+	arraySize += RXDATA_INITSIZE;
+	rxData = realloc(rxData, arraySize*sizeof(short));
+}
+
+/**
+ * @brief	Frees the dynamically allocated memory
+ *			designated for the RX buffer.
+ *
+ */
+void clear(void)
+{
+	free(rxData);
+}
+
+/**
  * @brief	Manchester encodes the given char* into a bit array to be parsed
  *			inside transmit function. The bit array is Manchester encoded.
  * @returns Pointer to encoded data array
