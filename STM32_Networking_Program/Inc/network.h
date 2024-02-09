@@ -19,6 +19,7 @@
 
 #define RT_MAX_VALUE 			0x7F7F7F
 #define TIM_TO_MICROSEC_SCALAR	15
+#define RXDATA_INITSIZE (8*40)             // 40 Bytes
 
 /*
  ******************************************************************************
@@ -75,6 +76,7 @@ typedef enum
  */
 
 extern void monitor_init(void);
+extern void rx_init(void);
 extern void encode(char* msg);
 extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);

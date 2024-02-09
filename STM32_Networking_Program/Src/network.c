@@ -75,6 +75,11 @@ static int transmission_len = 0;
 static int current_bit = 0;
 static int is_transmitting = 1;	// 0 = No IDLE state to start, 1 = IDLE state to start
 
+// Bit Reception Buffer
+static int* rxData;
+static unsigned int arraySize = RXDATA_INITSIZE;
+static int dataSize = 0;
+
 /*
  ******************************************************************************
  * Function Prototypes
@@ -168,6 +173,17 @@ void monitor_init(void)
 
 	// Enable timer
 	tim14->CR1 |= CEN;
+}
+
+/**
+ * @brief	Initializes the receiving buffer.
+ *
+ */
+void rx_init(void)
+{
+	//initialize 40 Bytes to store received transmissions
+    rxData = calloc(sizeof(short), arraySize);
+    dataSize = 0;	// array begins empty
 }
 
 /**
@@ -350,7 +366,13 @@ void TIM2_IRQHandler(void)
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
 
 			//Receiver
-			
+			// If no edge has been detected in the last ~500ms, add the missed bit to the buffer
+			if(tim8->CNT > THRESHOLD_TICKS/2){
+				rxData[dataSize] = !(gpiob->IDR & GPIO_IDR_Px3);
+				dataSize++;
+			}
+			rxData[dataSize] = gpiob->IDR & GPIO_IDR_Px3; //Store current line value
+			dataSize++;
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
