@@ -74,7 +74,7 @@ static int transmission_len = 0;
 
 // Bit tracker for transmit function
 static int current_bit = 0;
-static int start_transmitting = 0;	// 0 = No IDLE state to start, 1 = IDLE state to start
+static int is_transmitting = 1;	// 0 = No IDLE state to start, 1 = IDLE state to start
 
 /*
  ******************************************************************************
@@ -220,6 +220,7 @@ static void transmit(void)
 	// Adjusted every 500 uS
 	if(transmission_data != NULL)
 	{
+		is_transmitting = 1;
 		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1);
 		current_bit++;
 	}
@@ -231,6 +232,9 @@ static void transmit(void)
 
 		// Set to NULL
 		transmission_data = NULL;
+
+		// Done transmitting
+		is_transmitting = 0;
 	}
 
 }
@@ -272,13 +276,12 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		if (gpiob->IDR & GPIO_IDR_Px3)
     		{
     			state = IDLE;
-    			start_transmitting = 1;		// Transmission may only start in IDLE
     		    led_enable(IDLE_LED_STATE); // Enables left most LED
     		}
     		else
     		{
     		    state = COLLISION;
-    		    start_transmitting = 0;
+    		    is_transmitting = 0;
     		    led_enable(COLLISION_LED_STATE); // Enables third to left LED
     		}
     	}
@@ -304,7 +307,7 @@ void TIM2_IRQHandler(void)
 	{
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
-		if(transmission_data && busy_delay == NO && start_transmitting)
+		if(transmission_data && busy_delay == NO && (is_transmitting || state == IDLE))
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
