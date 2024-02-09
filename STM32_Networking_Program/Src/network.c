@@ -303,7 +303,6 @@ void TIM8_UP_TIM13_IRQHandler(void)
 	}
 }
 
-// Timer 2 interrupt fires when the timer is active for over 1.13ms
 /**
  * @brief	Interrupt service routine to monitor the network line state using
  * 			timer 2 and tracks edges seen on the input line.
@@ -325,8 +324,9 @@ void TIM2_IRQHandler(void)
 		// Clear interrupt flag manually since not reading from
 		tim2->SR = ~CC1IF;
 	}
+
 	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on
-						  // channel 1
+						  // channel 2
 	{
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
@@ -342,10 +342,15 @@ void TIM2_IRQHandler(void)
 //			busy_delay = YES;	// TODO: Enable once retransmit functionality
 								// 		 is added.
 		}
+		// When state goes IDLE -> BUSY, begin receiving data
 		else if(state == IDLE)
 		{
+			//Channel Monitor
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
+
+			//Receiver
+			
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
