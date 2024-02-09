@@ -84,6 +84,16 @@ void user_prompt(void)
 		printf("transmitting '%s'...\n\r",token2);
 	} else if(!strcmp(token1,"signal_1k\n")){
 		printf("transmitting 1KHz square wave for 5 seconds...\n\r");
+	} else if (!strcmp(token1,"rx")){
+		printf("Console is now in RECEIVER DEBUG MODE\n\r");
+		for(;;){
+			int num_bits = getDataSize();
+			if(num_bits>0){
+				//TODO getData function
+				//printf("%d", getData());
+			}
+		}
+	}
 	} else {
 		printf("ERR: unknown command.\n\r");
 	}

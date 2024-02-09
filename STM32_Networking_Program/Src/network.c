@@ -309,6 +309,14 @@ void post_collision_delay(void)
 }
 
 /**
+ * @brief	Relevant Setters/Getters.
+ *
+ */
+int getDataSize(void){
+	return dataSize;
+}
+
+/**
  * @brief	Timer 8 is a 1.13ms timeout. If an edge has not been seen since the
  * 			last time the interrupt fired the interrupt determines the state
  * 			between idle and collision.
