@@ -62,7 +62,7 @@ static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 
 // State
-static State state = IDLE;	// Current state
+static State state = BUSY;	// Current state
 static Delay busy_delay = NO;	// Collision to Busy delay flag
 
 // Timer Variables
@@ -129,6 +129,9 @@ void monitor_init(void)
 
 	// Set pull up for PB3
 	gpiob->PUPDR |= GPIO_PUPDR_Px3_UP;
+
+	// Set TX line high
+	gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
 
 	/*Timer Settings */
 	// Set to TIC in compare compare mode register 1 in CC
@@ -221,8 +224,15 @@ static void transmit(void)
 	if(transmission_data != NULL)
 	{
 		is_transmitting = 1;
-		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1);
+		gpiob->ODR = ((gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1));
 		current_bit++;
+	}
+	else
+	{
+		// Done transmitting
+		is_transmitting = 0;
+
+		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
 	}
 	if(current_bit >= transmission_len)
 	{
@@ -232,12 +242,6 @@ static void transmit(void)
 
 		// Set to NULL
 		transmission_data = NULL;
-
-		// Done transmitting
-		is_transmitting = 0;
-
-		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
-
 	}
 
 }
@@ -312,7 +316,7 @@ void TIM2_IRQHandler(void)
 	{
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
-		if(transmission_data && busy_delay == NO && (is_transmitting || state == IDLE))
+		if(busy_delay == NO && (is_transmitting || state == IDLE))
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();

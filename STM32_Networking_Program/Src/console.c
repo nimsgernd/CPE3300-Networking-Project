@@ -78,7 +78,7 @@ void user_prompt(void)
 	token1 = strtok(str," ");
 	printf("token1 = '%s'\n\r", token1);
 	token2 = strtok(NULL,"\n\r");
-	if(!strcmp(token1,"xmit")){
+	if(!strcmp(token1,"t")){
 		//TODO put tranmit func here
 		encode(token2);
 		printf("transmitting '%s'...\n\r",token2);
