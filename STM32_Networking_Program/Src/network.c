@@ -91,8 +91,8 @@ static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
 static int tim2_ch1_isr_entred = 0;
-static struct timeval time_of_current_edge;
-static struct timeval time_of_previous_edge;
+static uint16_t tim8_current_count = 0;
+static uint16_t tim8_previous_count = 0;
 /*
  ******************************************************************************
  * Function Prototypes
@@ -629,6 +629,7 @@ void TIM2_IRQHandler(void)
 
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
+		tim8_current_count = tim8->CNT;
 
 		// Once edge detected, start 1.13 ms timer
 		tim8->CR1 |= CEN;
@@ -648,27 +649,25 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
 
-			// 1 to zero transition (idles high). Capture first edge.
-			if(prev_edge && !curr_edge)
-			{
-				is_recieving = 1;
-			}
-
 			//Receiver
 			if(is_recieving)
 			{
-				//Store the current time value
-				gettimeofday(&time_of_current_edge, NULL);
 				//Compare with previous time.
+				uint16_t delta_t = tim8_current_count-tim8_previous_count;
 				//If edge occured within 506us, ignore.
-				if(((int)time_of_current_edge->tv_usec)
-					-((int)time_of_previous_edge->tv_usec) > (HALF_BIT_PERIOD_500_US/2))
+				if(delta_t > (THRESHOLD_TICKS-1)/2)
 				{
 					rx_data[data_size] = curr_edge;
 					data_size++;
 				}
 				//Store previous time value for next edge
-				time_of_previous_edge->tv_usec = time_of_current_edge->tv_usec;
+				tim8_previous_count = tim8_current_count;
+			}
+
+			// 1 to zero transition (idles high). Discard first edge.
+			if(prev_edge && !curr_edge)
+			{
+				is_recieving = 1;
 			}
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
