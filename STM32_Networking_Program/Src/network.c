@@ -667,6 +667,8 @@ void TIM2_IRQHandler(void)
 					rx_data[data_size] = curr_edge;
 					data_size++;
 				}
+				//Store previous time value for next edge
+				time_of_previous_edge->tv_usec = time_of_current_edge->tv_usec;
 			}
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
