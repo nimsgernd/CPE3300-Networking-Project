@@ -93,6 +93,8 @@ static int data_size = 0;		// Len of recieved data
 static int tim2_ch1_isr_entred = 0;
 static uint16_t tim8_current_count = 0;
 static uint16_t tim8_previous_count = 0;
+static uint16_t tim14_current_count = 0;
+static uint16_t tim14_previous_count = 0;
 /*
  ******************************************************************************
  * Function Prototypes
@@ -630,6 +632,8 @@ void TIM2_IRQHandler(void)
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
 		tim8_current_count = tim8->CNT;
+		//tim14_previous_count = tim14_current_count;
+		//tim14_current_count = tim14->CNT;
 
 		// Once edge detected, start 1.13 ms timer
 		tim8->EGR |= UG;		// Reset count value
@@ -655,6 +659,7 @@ void TIM2_IRQHandler(void)
 			{
 				//Compare with previous time.
 				uint16_t delta_t = tim8_current_count-tim8_previous_count;
+				//uint16_t delta_t = tim14_current_count-tim14_previous_count;
 				//If edge occured within 506us, ignore.
 				if(delta_t > (THRESHOLD_TICKS-1)/2)
 				{
