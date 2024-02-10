@@ -632,6 +632,7 @@ void TIM2_IRQHandler(void)
 		tim8_current_count = tim8->CNT;
 
 		// Once edge detected, start 1.13 ms timer
+		tim8->EGR |= UG;		// Reset count value
 		tim8->CR1 |= CEN;
 
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout

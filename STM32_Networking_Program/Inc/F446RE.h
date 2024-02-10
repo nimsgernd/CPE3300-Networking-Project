@@ -108,6 +108,9 @@
 #define CC1IF	1 << 1 // [0 = No input capture occurred, 1 = Input capture occurred in TIMx_CCR1 register
 #define CC2IF	1 << 2
 
+// Event Generation Register
+#define UG 1 << 0 // [0 = No action, 1 = Reinitialize the counter and generates an update of the registers]
+
 /*
  ******************************************************************************
  * GPIO BITS
