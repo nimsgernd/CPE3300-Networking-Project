@@ -27,7 +27,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
 #include <string.h>
 
 // Project
@@ -60,6 +59,9 @@ static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
 static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 
+// TODO: Implement packet struct
+packet pkt;
+
 // State
 static State state = BUSY;	// Current state
 static Delay busy_delay = NO;	// Collision to Busy delay flag
@@ -74,6 +76,11 @@ static int transmission_len = 0;
 // Bit tracker for transmit function
 static int current_bit = 0;
 static int is_transmitting = 1;	// 0 = No IDLE state to start, 1 = IDLE state to start
+
+// TODO: REMOVE ONCE HEADER ADDED... IF header not supported, data MUST start with logic-0
+static int prev_edge = 0;	// 0 = previous edge was logic 0, 1 = previous edge was logic 1
+static int curr_edge = 0;
+static int is_recieving = 0;
 
 // Bit Reception Buffer
 static int* rxData;
@@ -329,6 +336,9 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 									 // every half-bit period "500 us" for transmitter
 	{
+		prev_edge = curr_edge;
+		curr_edge = gpiob->IDR & GPIO_IDR_Px3;
+
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
 		if(busy_delay == NO && (is_transmitting || state == IDLE))
@@ -365,14 +375,38 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
 
+			// 1 to zero transition (idles high)
+			if(prev_edge && !curr_edge)
+			{
+				is_recieving = 1;
+			}
+
+
+
 			//Receiver
-			// If no edge has been detected in the last ~500ms, add the missed bit to the buffer
-			if(tim8->CNT > THRESHOLD_TICKS/2){
-				rxData[dataSize] = !(gpiob->IDR & GPIO_IDR_Px3);
+			/**
+			 * NOTE: tim8 is also used as rx timer
+			 *  a high-to-low transition in the middle of the bit period.
+			 *  Thus, while in IDLE, the first edge that the receiver will see will be
+			 *  the transition in the middle of the bit period, thus, the second bit period
+			 *  starts 500 μs after the first falling edge in the transmission.
+			 *  If you are not yet supporting a header, ensure any data you receive
+			 *  also starts with a logic-0 to ensure consistent timing.
+			 */
+
+			// If no edge has been detected in the last ~500ms, add the missed bit to the buffer... last bit
+			if(is_recieving)
+			{
+				// If no edge has been detected in the last ~500ms, add the missed bit to the buffer... last bit
+				if(tim8->CNT > THRESHOLD_TICKS/2)
+				{
+					rxData[dataSize] = !curr_edge;
+					dataSize++;
+					is_recieving = 0;
+				}
+				rxData[dataSize] = curr_edge; //Store current line value
 				dataSize++;
 			}
-			rxData[dataSize] = gpiob->IDR & GPIO_IDR_Px3; //Store current line value
-			dataSize++;
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
