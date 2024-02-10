@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 // Project
 #include "delay.h"
@@ -89,6 +91,8 @@ static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
 static int tim2_ch1_isr_entred = 0;
+static struct timeval time_of_current_edge;
+static struct timeval time_of_previous_edge;
 /*
  ******************************************************************************
  * Function Prototypes
@@ -601,19 +605,6 @@ void TIM2_IRQHandler(void)
 		 *  also starts with a logic-0 to ensure consistent timing.
 		 */
 
-		// If we are recieving, tie to edge, ignore first edge
-		if(is_recieving && tim2_ch1_isr_entred && was_edge)
-		{
-			// If there isn't enough room for another byte of data, increase the size of the array
-			if(data_size >= array_size)
-			{
-				embiggen();
-			}
-
-			rx_data[data_size] = curr_edge;
-			data_size++;
-		}
-
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
 		else if(busy_delay == NO && (is_transmitting || state == IDLE))
@@ -663,6 +654,20 @@ void TIM2_IRQHandler(void)
 				is_recieving = 1;
 			}
 
+			//Receiver
+			if(is_recieving)
+			{
+				//Store the current time value
+				gettimeofday(&time_of_current_edge, NULL);
+				//Compare with previous time.
+				//If edge occured within 506us, ignore.
+				if(((int)time_of_current_edge->tv_usec)
+					-((int)time_of_previous_edge->tv_usec) > (HALF_BIT_PERIOD_500_US/2))
+				{
+					rx_data[data_size] = curr_edge;
+					data_size++;
+				}
+			}
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
