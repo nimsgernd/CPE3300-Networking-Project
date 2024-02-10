@@ -607,7 +607,7 @@ void TIM2_IRQHandler(void)
 
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
-		else if(busy_delay == NO && (is_transmitting || state == IDLE))
+		if(busy_delay == NO && (is_transmitting || state == IDLE))
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
