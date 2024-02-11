@@ -31,12 +31,6 @@
  */
 
 /*SIGNAL THRESHOLDS*/
-// Error percentage = 1.32%
-#define SIGNAL_MOE_PERCENTAGE 1.32f
-
-// Error percentage expressed as a decimal i.e. 1.32/100 = 0.0132
-#define SIGNAL_MOE_DECIMAL (float)(SIGNAL_MOE_PERCENTAGE / 100)
-
 // Standard signal period... i.e. without 1.32% tolerance.
 // 1 ms
 #define NOMINAL_SIGNAL_PERIOD_US 1000
