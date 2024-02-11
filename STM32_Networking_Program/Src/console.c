@@ -78,24 +78,38 @@ void user_prompt(void)
 	token1 = strtok(str," ");
 	printf("token1 = '%s'\n\r", token1);
 	token2 = strtok(NULL,"\n\r");
-	if(!strcmp(token1,"t")){
-		//TODO put tranmit func here
+	if(!strcmp(token1,"t"))
+	{
 		encode(token2);
 		printf("transmitting '%s'...\n\r",token2);
-	} else if(!strcmp(token1,"signal_1k\n")){
+	} else if(!strcmp(token1,"signal_1k\n"))
+	{
 		printf("transmitting 1KHz square wave for 5 seconds...\n\r");
-	} else if (!strcmp(token1,"rx")){
-		printf("Console is now in RECEIVER DEBUG MODE\n\r");
-		for(;;){
-			int num_bits = getDataSize();
-			if(num_bits>0){
-				//TODO getData function
-				//printf("%d", getData());
+	} else if (!strcmp(token1,"rx"))
+	{
+		printf("Console is now in RECEIVER TEST MODE\n\r");
+		for(;;)
+		{
+			// If there's data inside the buffer, then print it
+			if(get_dataSize > 0)
+			{
+				printf("%i\n\r", *get_data());
 			}
 		}
+	} else if(!strcmp(token1, "r"))
+	{
+		// Checks for a recieved message, prints it to console, then returns to command prompt
+		if(get_dataSize > 0)
+		{
+			printf("%i\n\r", *get_data());
+		}
+		else
+		{
+			printf("No data recieved\n\r");
+		}
 	}
-	} else {
+	else
+	{
 		printf("ERR: unknown command.\n\r");
 	}
-
 }

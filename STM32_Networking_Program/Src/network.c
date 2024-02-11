@@ -83,9 +83,9 @@ static int curr_edge = 0;
 static int is_recieving = 0;
 
 // Bit Reception Buffer
-static int* rxData;
-static unsigned int arraySize = RXDATA_INITSIZE;
-static int dataSize = 0;
+static int* rx_data;
+static unsigned int array_size = RXDATA_INITSIZE;
+static int data_size = 0;
 
 /*
  ******************************************************************************
@@ -189,8 +189,8 @@ void monitor_init(void)
 void rx_init(void)
 {
 	//initialize 40 Bytes to store received transmissions
-    rxData = calloc(sizeof(short), arraySize);
-    dataSize = 0;	// array begins empty
+    rx_data = calloc(sizeof(short), array_size);
+    data_size = 0;	// array begins empty
 }
 
 /**
@@ -199,8 +199,8 @@ void rx_init(void)
  */
 void embiggen(void)
 {
-	arraySize += RXDATA_INITSIZE;
-	rxData = realloc(rxData, arraySize*sizeof(short));
+	array_size += RXDATA_INITSIZE;
+	rx_data = realloc(rx_data, array_size*sizeof(short));
 }
 
 /**
@@ -210,9 +210,17 @@ void embiggen(void)
  */
 void clear(void)
 {
-	free(rxData);
+	free(rx_data);
 }
 
+
+/**
+ * @breif	Returns the current contents of rx_data. Used by the console
+ */
+int* get_data(void)
+{
+	return rx_data;
+}
 /**
  * @brief	Manchester encodes the given char* into a bit array to be parsed
  *			inside transmit function. The bit array is Manchester encoded.
@@ -312,8 +320,8 @@ void post_collision_delay(void)
  * @brief	Relevant Setters/Getters.
  *
  */
-int getDataSize(void){
-	return dataSize;
+int get_dataSize(void){
+	return data_size;
 }
 
 /**
@@ -425,15 +433,21 @@ void TIM2_IRQHandler(void)
 			// If no edge has been detected in the last ~500ms, add the missed bit to the buffer... last bit
 			if(is_recieving)
 			{
+				// If there isn't enough room for another byte of data, increase the size of the array
+				if(data_size >= array_size)
+				{
+					embiggen();
+				}
+
 				// If no edge has been detected in the last ~500ms, add the missed bit to the buffer... last bit
 				if(tim8->CNT > THRESHOLD_TICKS/2)
 				{
-					rxData[dataSize] = !curr_edge;
-					dataSize++;
+					rx_data[data_size] = !curr_edge;
+					data_size++;
 					is_recieving = 0;
 				}
-				rxData[dataSize] = curr_edge; //Store current line value
-				dataSize++;
+				rx_data[data_size] = curr_edge; //Store current line value
+				data_size++;
 			}
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
