@@ -35,10 +35,12 @@
 // 1 ms
 #define NOMINAL_SIGNAL_PERIOD_US 1000
 
-// 130 uS tolerance to period = 1.13 MAX TOLERANCE
+// 130 uS tolerance to period = 1.13 MAX TOLERANCE.
 #define SIGNAL_PERIOD_TOLERANCE_US 130
 
 // 1000 uS + 130 uS = 1130 uS total period
+// THIS IS INSIDE IDLE THRESHOLD (1.113 ms - 1.188 ms) and
+// COLLISION TRESHOLD (1.04 ms - 1.14 ms)
 #define ADJUSTED_SIGNAL_PERIOD_US (NOMINAL_SIGNAL_PERIOD_US + SIGNAL_PERIOD_TOLERANCE_US)
 
 // Frequency representing the adjusted period. f = 1/T = 884 Hz
