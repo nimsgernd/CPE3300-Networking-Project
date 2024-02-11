@@ -93,7 +93,7 @@ void user_prompt(void)
 			// If there's data inside the buffer, then print it
 			if(get_dataSize > 0)
 			{
-				printf("%i\n\r", *get_data());
+				printf("%c\n\r", (char)*get_data());
 			}
 		}
 	} else if(!strcmp(token1, "r"))
@@ -101,7 +101,7 @@ void user_prompt(void)
 		// Checks for a recieved message, prints it to console, then returns to command prompt
 		if(get_dataSize > 0)
 		{
-			printf("%i\n\r", *get_data());
+			printf("%c\n\r", (char)*get_data());
 		}
 		else
 		{
