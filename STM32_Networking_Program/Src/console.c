@@ -28,6 +28,7 @@
 #include "F446RE.h"
 #include "network.h"
 #include "uart_driver.h"
+#include "delay.h"
 
 /*
  ******************************************************************************
@@ -99,6 +100,8 @@ void user_prompt(void)
 				}
 				printf("\n\r");
 			}
+			// Give time for transmissions to complete before reading them
+			delay_s(1);
 		}
 	} else if(!strcmp(token1, "r"))
 	{
