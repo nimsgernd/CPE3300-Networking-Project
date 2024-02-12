@@ -92,9 +92,9 @@ void user_prompt(void)
 		for(;;)
 		{
 			// If there's data inside the buffer, then print it
-			if(get_dataSize > 0)
+			if(get_dataSize() > 0)
 			{
-				int* data = get_data();
+				int* data = get_raw_data();
 				for (int i = 0; i < get_dataSize(); i++) {
 					printf("%c", (char)data[i]);
 				}
@@ -108,7 +108,7 @@ void user_prompt(void)
 		// Checks for a recieved message, prints it to console, then returns to command prompt
 		if(get_dataSize > 0)
 		{
-			printf("%s\n", rx_decoded);
+			printf("%s\n\r", get_ascii_data());
 		}
 		else
 		{

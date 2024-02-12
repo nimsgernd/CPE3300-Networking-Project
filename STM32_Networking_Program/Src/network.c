@@ -217,9 +217,18 @@ void clear(void)
 
 
 /**
- * @breif	Returns the ascii decoded contents of recieved data
+ * @breif	Returns the raw rx buffer data
  */
-char* get_data(void)
+int* get_raw_data(void)
+{
+	return rx_data;
+}
+
+
+/**
+ * @brief	Retrns ascii encoded rx_data
+ */
+char* get_ascii_data(void)
 {
 	return rx_decoded;
 }
