@@ -105,11 +105,7 @@ void user_prompt(void)
 		// Checks for a recieved message, prints it to console, then returns to command prompt
 		if(get_dataSize > 0)
 		{
-			int* data = get_data();
-			for (int i = 0; i < get_dataSize(); i++) {
-				printf("%c", (char)data[i]);
-			}
-			printf("\n\r");
+			printf("%s\n", rx_decoded);
 		}
 		else
 		{

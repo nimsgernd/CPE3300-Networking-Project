@@ -84,8 +84,9 @@ static int is_recieving = 0;
 
 // Bit Reception Buffer
 static int* rx_data;
+static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE;
-static int data_size = 0;
+static int data_size = 0;		// Len of recieved data
 
 /*
  ******************************************************************************
@@ -94,7 +95,8 @@ static int data_size = 0;
  */
 
 static void transmit(void);
-
+static void decode(void);
+static void reset_rx_data(void);
 /*
  ******************************************************************************
  * Function Definitions
@@ -205,21 +207,21 @@ void embiggen(void)
 
 /**
  * @brief	Frees the dynamically allocated memory
- *			designated for the RX buffer.
+ *			designated for the decoded data.
  *
  */
 void clear(void)
 {
-	free(rx_data);
+	free(rx_decoded);
 }
 
 
 /**
- * @breif	Returns the current contents of rx_data. Used by the console
+ * @breif	Returns the ascii decoded contents of recieved data
  */
-int* get_data(void)
+char* get_data(void)
 {
-	return rx_data;
+	return rx_decoded;
 }
 /**
  * @brief	Manchester encodes the given char* into a bit array to be parsed
@@ -262,6 +264,50 @@ void encode(char* msg) {
 //    printf("\n");
 }
 
+
+/**
+ * @breif 	Used inside the reciever to decode the manchester encoded data into ascii
+ */
+static void decode(void)
+{
+    rx_decoded = (char*)malloc(((data_size / 2) + 1) * sizeof(char));
+
+    // Allocate memory for the decoded message
+    if (rx_decoded == NULL)
+    {
+        printf("Error: Could not allocate memory for decoded message\n");
+        return;
+    }
+
+    // The length of the decoded message will be half the length of the encoded data
+    int len = data_size / 2;
+
+    // Iterate over the encoded data, two bits at a time
+    for(int i = 0; i < len; i++)
+    {
+        // Each bit in the decoded message is represented by a pair of bits in the encoded data
+        int bit_pair_index = i * 2;
+
+        // The first bit of the pair should be the inverse of the second bit
+        // If this is not the case, there may be an error in the encoded data
+        if(rx_data[bit_pair_index] == rx_data[bit_pair_index + 1])
+        {
+            printf("Error: Invalid Manchester encoding at bit pair %d\n", i);
+            free(rx_decoded);
+            return;
+        }
+
+        // The first bit of the pair is the decoded bit
+        int bit = rx_data[bit_pair_index];
+
+        // Add the decoded bit to the decoded message
+        rx_decoded[i / 8] = (rx_decoded[i / 8] << 1) | bit;
+    }
+
+    // Null-terminate the decoded message
+    rx_decoded[len / 8] = '\0';
+}
+
 /**
  * @brief	Transmits the current bit pair in TIM2 CH1 ISR set at
  * 			500 uS.
@@ -297,6 +343,18 @@ static void transmit(void)
 	}
 }
 
+/**
+ * @brief	frees recived data and resets to defaults
+ */
+static void reset_rx_data(void)
+{
+    // Free rx_data... now decoded into rx_decoded
+    free(rx_data);
+
+    // Reset rx_data
+    rx_data = calloc(sizeof(short), RXDATA_INITSIZE);
+    data_size = 0;	// array begins empty
+}
 /**
  * @brief	Creates a randomized delay based on timer 14 which is acting as a
  * 			free running counter.
@@ -439,12 +497,18 @@ void TIM2_IRQHandler(void)
 					embiggen();
 				}
 
-				// Add lsat edge?
+				// Add last edge?
 				if(tim8->CNT > (THRESHOLD_TICKS-1)/2)
 				{
 					rx_data[data_size] = !curr_edge;
 					data_size++;
 					is_recieving = 0;
+
+					// Decode data i.e. 2 bits -> 1 bit, free rx_data, and reset params
+					decode();
+
+					// Reset recived data for more data
+					reset_rx_data();
 				}
 				rx_data[data_size] = curr_edge; //Store current line value
 				data_size++;
