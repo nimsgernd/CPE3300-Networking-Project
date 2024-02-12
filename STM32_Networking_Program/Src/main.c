@@ -66,6 +66,11 @@ int main(void)
 	// Initialize program console
 	console_init();
 
+	// Intitalize reciever
+	rx_init();
+
+	test_decode();
+
     /* Loop forever */
 	for(;;)
 	{

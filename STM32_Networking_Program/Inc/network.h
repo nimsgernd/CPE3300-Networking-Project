@@ -97,5 +97,6 @@ extern void TIM8_UP_TIM13_IRQHandler(void);
 extern void TIM2_IRQHandler(void);
 extern int* get_raw_data(void);
 extern char* get_ascii_data(void);
+extern void test_decode(void);
 
 #endif

@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 // Project
 #include "delay.h"
@@ -97,6 +98,7 @@ static int data_size = 0;		// Len of recieved data
 static void transmit(void);
 static void decode(void);
 static void reset_rx_data(void);
+static void assert_equal(char* actual, char* expected);
 /*
  ******************************************************************************
  * Function Definitions
@@ -191,7 +193,7 @@ void monitor_init(void)
 void rx_init(void)
 {
 	//initialize 40 Bytes to store received transmissions
-    rx_data = calloc(sizeof(short), sizeof(int));
+    rx_data = calloc(array_size, sizeof(int));
     data_size = 0;	// array begins empty
 }
 
@@ -232,6 +234,7 @@ char* get_ascii_data(void)
 {
 	return rx_decoded;
 }
+
 /**
  * @brief	Manchester encodes the given char* into a bit array to be parsed
  *			inside transmit function. The bit array is Manchester encoded.
@@ -315,6 +318,51 @@ static void decode(void)
 
     // Null-terminate the decoded message
     rx_decoded[len / 8] = '\0';
+}
+
+
+static void assert_equal(char* actual, char* expected) {
+    if (strcmp(actual, expected) != 0) {
+        printf("Assertion failed: expected \"%s\", got \"%s\"\n", expected, actual);
+    }
+}
+
+void test_decode(void) {
+    // Test 1: Decode a simple message
+    data_size = 16;
+    rx_data = malloc(data_size * sizeof(int));
+    rx_data[0] = 1; rx_data[1] = 0; // H
+    rx_data[2] = 0; rx_data[3] = 1;
+    rx_data[4] = 1; rx_data[5] = 0;
+    rx_data[6] = 0; rx_data[7] = 1;
+    rx_data[8] = 1; rx_data[9] = 0; // i
+    rx_data[10] = 0; rx_data[11] = 1;
+    rx_data[12] = 0; rx_data[13] = 1;
+    rx_data[14] = 1; rx_data[15] = 0;
+    decode();
+    assert_equal(rx_decoded, "Hi");
+    free(rx_data);
+    free(rx_decoded);
+
+    // Test 2: Decode an empty message
+    data_size = 0;
+    rx_data = malloc(data_size * sizeof(int));
+    decode();
+    assert_equal(rx_decoded, "");
+    free(rx_data);
+    free(rx_decoded);
+
+    // Test 3: Decode a message with invalid Manchester encoding
+    data_size = 4;
+    rx_data = malloc(data_size * sizeof(int));
+    rx_data[0] = 1; rx_data[1] = 1; // Invalid encoding
+    rx_data[2] = 0; rx_data[3] = 1; // Valid encoding
+    decode();
+    // The decode function should print an error message and return early,
+    // so the decoded message should be empty
+    assert_equal(rx_decoded, "");
+    free(rx_data);
+    free(rx_decoded);
 }
 
 /**
