@@ -411,7 +411,7 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
 
-			// 1 to zero transition (idles high)
+			// 1 to zero transition (idles high). Capture first edge.
 			if(prev_edge && !curr_edge)
 			{
 				is_recieving = 1;
@@ -430,7 +430,7 @@ void TIM2_IRQHandler(void)
 			 *  also starts with a logic-0 to ensure consistent timing.
 			 */
 
-			// If no edge has been detected in the last ~500ms, add the missed bit to the buffer... last bit
+			// If we are still recieving
 			if(is_recieving)
 			{
 				// If there isn't enough room for another byte of data, increase the size of the array
@@ -439,8 +439,8 @@ void TIM2_IRQHandler(void)
 					embiggen();
 				}
 
-				// If no edge has been detected in the last ~500ms, add the missed bit to the buffer... last bit
-				if(tim8->CNT > THRESHOLD_TICKS/2)
+				// Add lsat edge?
+				if(tim8->CNT > (THRESHOLD_TICKS-1)/2)
 				{
 					rx_data[data_size] = !curr_edge;
 					data_size++;
