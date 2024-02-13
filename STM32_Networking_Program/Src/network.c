@@ -567,8 +567,6 @@ void TIM2_IRQHandler(void)
 					// Reset recived data for more data
 					reset_rx_data();
 				}
-				rx_data[data_size] = curr_edge; //Store current line value
-				data_size++;
 			}
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
