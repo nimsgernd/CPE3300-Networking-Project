@@ -470,6 +470,7 @@ static void reset_rx_data(void)
     rx_data = (int*)calloc(array_size, sizeof(int));
     data_size = 0;	// array begins empty
 }
+
 /**
  * @brief	Creates a randomized delay based on timer 14 which is acting as a
  * 			free running counter.
@@ -511,6 +512,12 @@ void TIM8_UP_TIM13_IRQHandler(void)
 		// If count has not been updated
     	if (was_edge == 0 && state == BUSY)
     	{
+    		// End recieving.... reset reciever vars
+    		is_recieving = 0;
+
+			// Reset recived data for more data
+			reset_rx_data();
+
     		// Check line state. High = idle, Low = collision
     		if (gpiob->IDR & GPIO_IDR_Px3)
     		{
@@ -612,18 +619,14 @@ void TIM2_IRQHandler(void)
 					embiggen();
 				}
 
-				// Add last edge?
 				if(tim8->CNT > (THRESHOLD_TICKS-1)/2)
 				{
 					rx_data[data_size] = !curr_edge;
 					data_size++;
-					is_recieving = 0;
 
 					// Decode data i.e. 2 bits -> 1 bit, free rx_data, and reset params
 					decode();
 
-					// Reset recived data for more data
-					reset_rx_data();
 				}
 			}
 		}
