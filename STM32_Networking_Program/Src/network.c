@@ -592,7 +592,7 @@ void TIM2_IRQHandler(void)
 	{
 		//Receiver
 		/**
-		 * NOTE: tim8 is also used as rx timer
+		 * NOTE: tim2 is also used as rx timer
 		 *  a high-to-low transition in the middle of the bit period.
 		 *  Thus, while in IDLE, the first edge that the receiver will see will be
 		 *  the transition in the middle of the bit period, thus, the second bit period
@@ -647,7 +647,7 @@ void TIM2_IRQHandler(void)
 		{
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
-//			busy_delay = YES;	// TODO: Enable once retransmit functionality
+		//	busy_delay = YES;	// TODO: Enable once retransmit functionality
 								// 		 is added.
 		}
 		// When state goes IDLE -> BUSY, begin receiving data
