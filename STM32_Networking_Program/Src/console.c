@@ -83,10 +83,20 @@ void user_prompt(void)
 	{
 		encode(token2);
 		printf("transmitting '%s'...\n\r",token2);
-	} else if(!strcmp(token1,"signal_1k\n"))
+	}
+	else if(!strcmp(token1, "rx"))
 	{
-		printf("transmitting 1KHz square wave for 5 seconds...\n\r");
-	} else if (!strcmp(token1,"rx"))
+		// Checks for a recieved message, prints it to console, then returns to command prompt
+		if(get_dataSize > 0)
+		{
+			printf("%s\n\r", get_ascii_data());
+		}
+		else
+		{
+			printf("No data recieved\n\r");
+		}
+	}
+	else if (!strcmp(token1,"r"))
 	{
 		printf("Console is now in RECEIVER TEST MODE\n\r");
 		for(;;)
@@ -103,17 +113,20 @@ void user_prompt(void)
 			// Give time for transmissions to complete before reading them
 			delay_s(1);
 		}
-	} else if(!strcmp(token1, "r"))
+	}
+	else if(!strcmp(token1, "h"))
 	{
-		// Checks for a recieved message, prints it to console, then returns to command prompt
-		if(get_dataSize > 0)
-		{
-			printf("%s\n\r", get_ascii_data());
-		}
-		else
-		{
-			printf("No data recieved\n\r");
-		}
+		printf("=========================================================\n\r");
+		printf("tx [string]\n\r");
+		printf("	Transmits the string input by the user\n\r");
+		printf("\n\r");
+		printf("rx\n\r");
+		printf("	Prints the latest message to the console\n\r");
+		printf("\n\r");
+		printf("r\n\r");
+		printf("	Continuously prints messages to the console\n\r");
+		printf("	(Does not return)\n\r");
+		printf("=========================================================\n\r");
 	}
 	else
 	{
