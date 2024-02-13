@@ -88,7 +88,7 @@ static int* rx_data;
 static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
-
+static int tim2_ch1_isr_entred = 0;
 /*
  ******************************************************************************
  * Function Prototypes
@@ -546,6 +546,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		// End recieving.... reset reciever vars
     		is_recieving = 0;
 
+    		tim2_ch1_isr_entred = 0;
+
 			// Decode data i.e. 2 bits -> 1 bit, free rx_data, and reset params
 			decode();
 
@@ -588,13 +590,40 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 									 // every half-bit period "500 us" for transmitter
 	{
+		//Receiver
+		/**
+		 * NOTE: tim8 is also used as rx timer
+		 *  a high-to-low transition in the middle of the bit period.
+		 *  Thus, while in IDLE, the first edge that the receiver will see will be
+		 *  the transition in the middle of the bit period, thus, the second bit period
+		 *  starts 500 μs after the first falling edge in the transmission.
+		 *  If you are not yet supporting a header, ensure any data you receive
+		 *  also starts with a logic-0 to ensure consistent timing.
+		 */
+
+		// If we are recieving, ignore first edge
+		if(is_recieving && tim2_ch1_isr_entred == 1)
+		{
+			// If there isn't enough room for another byte of data, increase the size of the array
+			if(data_size >= array_size)
+			{
+				embiggen();
+			}
+
+			rx_data[data_size] = !curr_edge;
+			data_size++;
+		}
+
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
-		if(busy_delay == NO && (is_transmitting || state == IDLE))
+		else if(busy_delay == NO && (is_transmitting || state == IDLE))
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
 		}
+
+		tim2_ch1_isr_entred = 1;
+
 
 		// Clear interrupt flag manually since not reading from
 		tim2->SR = ~CC1IF;
@@ -634,36 +663,6 @@ void TIM2_IRQHandler(void)
 				is_recieving = 1;
 			}
 
-
-
-			//Receiver
-			/**
-			 * NOTE: tim8 is also used as rx timer
-			 *  a high-to-low transition in the middle of the bit period.
-			 *  Thus, while in IDLE, the first edge that the receiver will see will be
-			 *  the transition in the middle of the bit period, thus, the second bit period
-			 *  starts 500 μs after the first falling edge in the transmission.
-			 *  If you are not yet supporting a header, ensure any data you receive
-			 *  also starts with a logic-0 to ensure consistent timing.
-			 */
-
-			// If we are still recieving
-			if(is_recieving)
-			{
-				// If there isn't enough room for another byte of data, increase the size of the array
-				if(data_size >= array_size)
-				{
-					embiggen();
-				}
-
-				if(tim8->CNT > (THRESHOLD_TICKS-1)/2)
-				{
-					rx_data[data_size] = !curr_edge;
-					data_size++;
-
-
-				}
-			}
 		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
