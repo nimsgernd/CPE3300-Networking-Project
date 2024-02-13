@@ -610,7 +610,7 @@ void TIM2_IRQHandler(void)
 				embiggen();
 			}
 
-			rx_data[data_size] = !curr_edge;
+			rx_data[data_size] = curr_edge;
 			data_size++;
 		}
 
