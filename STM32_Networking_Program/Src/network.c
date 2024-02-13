@@ -299,11 +299,11 @@ static int bitArrayToInt(int *bitArray, int length) {
  */
 static void decode(void)
 {
-    rx_decoded = (char*)malloc(((data_size / CHAR_BIT*2) + 1) * sizeof(char));
+    rx_decoded = (char*)calloc(((data_size / CHAR_BIT*2) + 1),sizeof(char));
 
     if (rx_decoded == NULL)
     {
-        printf("Error: Could not allocate memory for decoded message\n\r");
+        //printf("Error: Could not allocate memory for decoded message\n\r");
         return;
     }
 
@@ -311,7 +311,7 @@ static void decode(void)
     int len = data_size / 16;
 
     // Temp array to hold only ascii values
-    int* temp_ascii = (int*)malloc(CHAR_BIT*sizeof(int));
+    int* temp_ascii = (int*)calloc(CHAR_BIT,sizeof(int));
 
     // Iterate over all characters
     for(int i = 0; i < len; i++)
@@ -323,7 +323,10 @@ static void decode(void)
     	{
         // The first bit of the pair should be the inverse of the second bit
         // If this is not the case, there may be an error in the encoded data
-    		int ascii_bit = rx_data[j +(i*CHAR_BIT*2)];
+
+    		int rx_index = j + (i*(CHAR_BIT*2));
+
+    		int ascii_bit = rx_data[rx_index];
     		temp_ascii[ascii_index] = ascii_bit;
 
     		ascii_index++;
@@ -346,7 +349,7 @@ static void assert_equal(char* actual, char* expected) {
 
 void test_decode(void) {
     // Test 1: Decode a simple message
-    data_size = 32; // Set data size to match the provided bit values
+    data_size = 48; // Set data size to match the provided bit values
     rx_data = malloc(data_size * sizeof(int));
     // Assigning values to rx_data: 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 1 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0
     rx_data[0] = 1;
@@ -396,6 +399,32 @@ void test_decode(void) {
 
     rx_data[30] = 0;
     rx_data[31] = 1;
+
+
+    rx_data[32] = 1;
+    rx_data[33] = 0;
+
+    rx_data[34] = 0;
+    rx_data[35] = 1;
+
+    rx_data[36] = 0;
+    rx_data[37] = 1;
+
+    rx_data[38] = 1;
+    rx_data[39] = 0;
+
+    rx_data[40] = 1;
+    rx_data[41] = 0;
+
+    rx_data[42] = 0;
+    rx_data[43] = 1;
+
+    rx_data[44] = 0;
+    rx_data[45] = 1;
+
+    rx_data[46] = 0;
+    rx_data[47] = 1;
+
 
     decode();
     assert_equal(rx_decoded, "Hi");
@@ -470,7 +499,7 @@ static void reset_rx_data(void)
 	array_size = RXDATA_INITSIZE_BITS;
 
 	// Reallocate array to init amount of bytes i.e. 40
-	rx_data = (int*)realloc(array_size, RXDATA_INITSIZE_BYTES*sizeof(int));
+	rx_data = (int*)realloc(rx_data, RXDATA_INITSIZE_BYTES*sizeof(int));
 }
 
 /**
