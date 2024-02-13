@@ -317,11 +317,9 @@ static void decode(void)
     {
 		int ascii_index = 0;
 
-<<<<<<< HEAD
     	// For each of the 16 bits that reps 1 byte
     	for(int j = 1; j < CHAR_BIT*2; j+=2)
     	{
-=======
         // The first bit of the pair should be the inverse of the second bit
         // If this is not the case, there may be an error in the encoded data
         if(rx_data[bit_pair_index] == rx_data[bit_pair_index + 1])
@@ -330,7 +328,6 @@ static void decode(void)
             free(rx_decoded);
             return;
         }
->>>>>>> 9907f11ae9bee55157f1953fcc2feaa4763dbc9b
 
     		int ascii_bit = rx_data[j +(i*CHAR_BIT*2)];
     		temp_ascii[ascii_index] = ascii_bit;
