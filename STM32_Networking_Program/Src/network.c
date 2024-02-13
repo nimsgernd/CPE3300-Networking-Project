@@ -287,7 +287,7 @@ static void decode(void)
     // Allocate memory for the decoded message
     if (rx_decoded == NULL)
     {
-        printf("Error: Could not allocate memory for decoded message\n");
+        printf("Error: Could not allocate memory for decoded message\n\r");
         return;
     }
 
@@ -304,7 +304,7 @@ static void decode(void)
         // If this is not the case, there may be an error in the encoded data
         if(rx_data[bit_pair_index] == rx_data[bit_pair_index + 1])
         {
-            printf("Error: Invalid Manchester encoding at bit pair %d\n", i);
+            printf("Error: Invalid Manchester encoding at bit pair %d\n\r", i);
             free(rx_decoded);
             return;
         }
@@ -323,7 +323,7 @@ static void decode(void)
 
 static void assert_equal(char* actual, char* expected) {
     if (strcmp(actual, expected) != 0) {
-        printf("Assertion failed: expected \"%s\", got \"%s\"\n", expected, actual);
+        printf("Assertion failed: expected \"%s\", got \"%s\"\n\r", expected, actual);
     }
 }
 

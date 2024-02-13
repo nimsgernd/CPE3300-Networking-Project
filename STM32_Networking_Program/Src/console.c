@@ -76,17 +76,34 @@ void user_prompt(void)
 
 	printf("net> ");
 	fgets(str, 99, stdin);
-	token1 = strtok(str," ");
+	token1 = strtok(str," \n");
 	printf("token1 = '%s'\n\r", token1);
 	token2 = strtok(NULL,"\n\r");
-	if(!strcmp(token1,"t"))
+	if(!strcmp(token1,"tx"))
 	{
-		encode(token2);
-		printf("transmitting '%s'...\n\r",token2);
-	} else if(!strcmp(token1,"signal_1k\n"))
+		if(token2)
+		{
+			encode(token2);
+			printf("transmitting '%s'...\n\r",token2);
+		}
+		else
+		{
+			printf("Need to have a message to transmit\n\r");
+		}
+	}
+	else if(!strcmp(token1, "rx"))
 	{
-		printf("transmitting 1KHz square wave for 5 seconds...\n\r");
-	} else if (!strcmp(token1,"rx"))
+		// Checks for a recieved message, prints it to console, then returns to command prompt
+		if(get_dataSize > 0)
+		{
+			printf("%s\n\r", get_ascii_data());
+		}
+		else
+		{
+			printf("No data recieved\n\r");
+		}
+	}
+	else if (!strcmp(token1,"r"))
 	{
 		printf("Console is now in RECEIVER TEST MODE\n\r");
 		for(;;)
@@ -103,17 +120,21 @@ void user_prompt(void)
 			// Give time for transmissions to complete before reading them
 			delay_s(1);
 		}
-	} else if(!strcmp(token1, "r"))
+	}
+	else if(!strcmp(token1, "h"))
 	{
-		// Checks for a recieved message, prints it to console, then returns to command prompt
-		if(get_dataSize > 0)
-		{
-			printf("%s\n\r", get_ascii_data());
-		}
-		else
-		{
-			printf("No data recieved\n\r");
-		}
+		printf("=========================================================\n\r");
+		printf("tx [message]\n\r");
+		printf("	transmits the string input after the command\n\r");
+		printf("\n\r");
+		printf("rx\n\r");
+		printf("	prints the most recent message to the console\n\r");
+		printf("\n\r");
+		printf("r\n\r");
+		printf("	continuously prints messages to the console\n\r");
+		printf("	(does not exit)\n\r");
+		printf("=========================================================\n\r");
+
 	}
 	else
 	{
