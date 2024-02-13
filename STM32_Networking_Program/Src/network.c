@@ -79,8 +79,8 @@ static int current_bit = 0;
 static int is_transmitting = 1;	// 0 = No IDLE state to start, 1 = IDLE state to start
 
 // TODO: REMOVE ONCE HEADER ADDED... IF header not supported, data MUST start with logic-0
-static int prev_edge = 0;	// 0 = previous edge was logic 0, 1 = previous edge was logic 1
-static int curr_edge = 0;
+static int prev_edge = 1;	// 0 = previous edge was logic 0, 1 = previous edge was logic 1
+static int curr_edge = 1;
 static int is_recieving = 0;
 
 // Bit Reception Buffer
@@ -546,8 +546,13 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		// End recieving.... reset reciever vars
     		is_recieving = 0;
 
+			// Decode data i.e. 2 bits -> 1 bit, free rx_data, and reset params
+			decode();
+
 			// Reset recived data for more data
 			reset_rx_data();
+
+
 
     		// Check line state. High = idle, Low = collision
     		if (gpiob->IDR & GPIO_IDR_Px3)
@@ -583,9 +588,6 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 									 // every half-bit period "500 us" for transmitter
 	{
-		prev_edge = curr_edge;
-		curr_edge = gpiob->IDR & GPIO_IDR_Px3;
-
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
 		if(busy_delay == NO && (is_transmitting || state == IDLE))
@@ -601,6 +603,10 @@ void TIM2_IRQHandler(void)
 	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on
 						  // channel 2
 	{
+
+		prev_edge = curr_edge;
+		curr_edge = gpiob->IDR & GPIO_IDR_Px3;
+
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
 
@@ -655,8 +661,6 @@ void TIM2_IRQHandler(void)
 					rx_data[data_size] = !curr_edge;
 					data_size++;
 
-					// Decode data i.e. 2 bits -> 1 bit, free rx_data, and reset params
-					decode();
 
 				}
 			}
