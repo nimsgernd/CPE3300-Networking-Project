@@ -322,13 +322,6 @@ static void decode(void)
     	{
         // The first bit of the pair should be the inverse of the second bit
         // If this is not the case, there may be an error in the encoded data
-        if(rx_data[bit_pair_index] == rx_data[bit_pair_index + 1])
-        {
-            printf("Error: Invalid Manchester encoding at bit pair %d\n\r", i);
-            free(rx_decoded);
-            return;
-        }
-
     		int ascii_bit = rx_data[j +(i*CHAR_BIT*2)];
     		temp_ascii[ascii_index] = ascii_bit;
 
