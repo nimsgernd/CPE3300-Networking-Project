@@ -77,14 +77,29 @@ void user_prompt(void)
 	printf("net> ");
 	fgets(str, 99, stdin);
 	token1 = strtok(str," ");
+#ifdef DE_CONSOLE
 	printf("token1 = '%s'\n\r", token1);
+#endif
 	token2 = strtok(NULL,"\n\r");
-	if(!strcmp(token1,"t"))
+#ifdef DE_CONSOLE
+	if(token2)
 	{
-		encode(token2);
-		printf("transmitting '%s'...\n\r",token2);
+		printf("token2 = '%s'\n\r", token2);
 	}
-	else if(!strcmp(token1, "rx"))
+#endif
+	if(!strcmp(token1,"tx"))
+	{
+		if(token2)
+		{
+			encode(token2);
+			printf("transmitting '%s'...\n\r",token2);
+		}
+		else
+		{
+			printf("Need string to transmit\n\r");
+		}
+	}
+	else if(!strcmp(token1,"rx"))
 	{
 		// Checks for a recieved message, prints it to console, then returns to command prompt
 		if(get_dataSize > 0)
