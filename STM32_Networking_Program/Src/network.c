@@ -276,50 +276,64 @@ void encode(char* msg) {
 //    printf("\n");
 }
 
+/**
+ * @brief	Takes in a bit array and converts it to a single int.
+ */
+int bitArrayToInt(int *bitArray, int length) {
+    int result = 0;
+
+    for (int i = 0; i < length; i++) {
+        // Shift the current result to the left by 1 bit
+        result <<= 1;
+        // Add the current bit to the result
+        result |= bitArray[i];
+    }
+
+    return result;
+}
 
 /**
  * @breif 	Used inside the reciever to decode the manchester encoded data into ascii
  */
 static void decode(void)
 {
-    rx_decoded = (char*)malloc(((data_size / 2) + 1) * sizeof(char));
+    rx_decoded = (char*)malloc(((data_size / CHAR_BIT*2) + 1) * sizeof(char));
 
-    // Allocate memory for the decoded message
     if (rx_decoded == NULL)
     {
         printf("Error: Could not allocate memory for decoded message\n");
         return;
     }
 
-    // The length of the decoded message will be half the length of the encoded data
-    int len = data_size / 2;
+    // One ascii character is 1 byte which is encoded to 16 bits
+    int len = data_size / 16;
 
-    // Iterate over the encoded data, two bits at a time
+    // Temp array to hold only ascii values
+    int* temp_ascii = (int*)malloc(CHAR_BIT*sizeof(int));
+
+    // Iterate over all characters
     for(int i = 0; i < len; i++)
     {
-        // Each bit in the decoded message is represented by a pair of bits in the encoded data
-        int bit_pair_index = i * 2;
+		int ascii_index = 0;
 
-        // The first bit of the pair should be the inverse of the second bit
-        // If this is not the case, there may be an error in the encoded data
-        if(rx_data[bit_pair_index] == rx_data[bit_pair_index + 1])
-        {
-            printf("Error: Invalid Manchester encoding at bit pair %d\n", i);
-            free(rx_decoded);
-            return;
-        }
+    	// For each of the 16 bits that reps 1 byte
+    	for(int j = 1; j < CHAR_BIT*2; j+=2)
+    	{
 
-        // The first bit of the pair is the decoded bit
-        int bit = rx_data[bit_pair_index];
+    		int ascii_bit = rx_data[j +(i*CHAR_BIT*2)];
+    		temp_ascii[ascii_index] = ascii_bit;
 
-        // Add the decoded bit to the decoded message
-        rx_decoded[i / 8] = (rx_decoded[i / 8] << 1) | bit;
+    		ascii_index++;
+
+    	}
+
+    	int char_ascii = bitArrayToInt(temp_ascii, CHAR_BIT);
+    	rx_decoded[i] = (char)char_ascii;
     }
 
-    // Null-terminate the decoded message
-    rx_decoded[len / 8] = '\0';
-}
+    free(temp_ascii);
 
+}
 
 static void assert_equal(char* actual, char* expected) {
     if (strcmp(actual, expected) != 0) {
@@ -329,16 +343,57 @@ static void assert_equal(char* actual, char* expected) {
 
 void test_decode(void) {
     // Test 1: Decode a simple message
-    data_size = 16;
+    data_size = 32; // Set data size to match the provided bit values
     rx_data = malloc(data_size * sizeof(int));
-    rx_data[0] = 1; rx_data[1] = 0; // H
-    rx_data[2] = 0; rx_data[3] = 1;
-    rx_data[4] = 1; rx_data[5] = 0;
-    rx_data[6] = 0; rx_data[7] = 1;
-    rx_data[8] = 1; rx_data[9] = 0; // i
-    rx_data[10] = 0; rx_data[11] = 1;
-    rx_data[12] = 0; rx_data[13] = 1;
-    rx_data[14] = 1; rx_data[15] = 0;
+    // Assigning values to rx_data: 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 1 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0
+    rx_data[0] = 1;
+    rx_data[1] = 0;
+
+    rx_data[2] = 0;
+    rx_data[3] = 1;
+
+    rx_data[4] = 1;
+    rx_data[5] = 0;
+
+    rx_data[6] = 1;
+    rx_data[7] = 0;
+
+    rx_data[8] = 0;
+    rx_data[9] = 1;
+
+    rx_data[10] = 1;
+    rx_data[11] = 0;
+
+    rx_data[12] = 1;
+    rx_data[13] = 0;
+
+    rx_data[14] = 1;
+    rx_data[15] = 0;
+
+    rx_data[16] = 1;
+    rx_data[17] = 0;
+
+    rx_data[18] = 0;
+    rx_data[19] = 1;
+
+    rx_data[20] = 0;
+    rx_data[21] = 1;
+
+    rx_data[22] = 1;
+    rx_data[23] = 0;
+
+    rx_data[24] = 0;
+    rx_data[25] = 1;
+
+    rx_data[26] = 1;
+    rx_data[27] = 0;
+
+    rx_data[28] = 1;
+    rx_data[29] = 0;
+
+    rx_data[30] = 0;
+    rx_data[31] = 1;
+
     decode();
     assert_equal(rx_decoded, "Hi");
     free(rx_data);
@@ -364,6 +419,7 @@ void test_decode(void) {
     free(rx_data);
     free(rx_decoded);
 }
+
 
 /**
  * @brief	Transmits the current bit pair in TIM2 CH1 ISR set at
