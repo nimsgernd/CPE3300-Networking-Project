@@ -601,8 +601,8 @@ void TIM2_IRQHandler(void)
 		 *  also starts with a logic-0 to ensure consistent timing.
 		 */
 
-		// If we are recieving, ignore first edge
-		if(is_recieving && tim2_ch1_isr_entred == 1)
+		// If we are recieving, tie to edge, ignore first edge
+		if(is_recieving && tim2_ch1_isr_entred && was_edge)
 		{
 			// If there isn't enough room for another byte of data, increase the size of the array
 			if(data_size >= array_size)
