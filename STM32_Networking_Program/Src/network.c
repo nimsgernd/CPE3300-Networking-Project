@@ -596,17 +596,6 @@ void TIM2_IRQHandler(void)
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 									 // every half-bit period "500 us" for transmitter
 	{
-		//Receiver
-		/**
-		 * NOTE: tim2 is also used as rx timer
-		 *  a high-to-low transition in the middle of the bit period.
-		 *  Thus, while in IDLE, the first edge that the receiver will see will be
-		 *  the transition in the middle of the bit period, thus, the second bit period
-		 *  starts 500 μs after the first falling edge in the transmission.
-		 *  If you are not yet supporting a header, ensure any data you receive
-		 *  also starts with a logic-0 to ensure consistent timing.
-		 */
-
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
 		if(busy_delay == NO && (is_transmitting || state == IDLE))
@@ -627,17 +616,42 @@ void TIM2_IRQHandler(void)
 	{
 
 		prev_edge = curr_edge;
-		curr_edge = gpiob->IDR & GPIO_IDR_Px3;
+		curr_edge = (gpiob->IDR & GPIO_IDR_Px3)>>3;
 
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
-		tim8_current_count = tim8->CNT;
-		//tim14_previous_count = tim14_current_count;
-		//tim14_current_count = tim14->CNT;
+//		tim8_current_count = tim8->CNT;
+		tim14_previous_count = tim14_current_count;
+		tim14_current_count = tim14->CNT;
 
 		// Once edge detected, start 1.13 ms timer
 		tim8->EGR |= UG;		// Reset count value
 		tim8->CR1 |= CEN;
+
+		//Receiver
+		/**
+		 * NOTE: tim2 is also used as rx timer
+		 *  a high-to-low transition in the middle of the bit period.
+		 *  Thus, while in IDLE, the first edge that the receiver will see will be
+		 *  the transition in the middle of the bit period, thus, the second bit period
+		 *  starts 500 μs after the first falling edge in the transmission.
+		 *  If you are not yet supporting a header, ensure any data you receive
+		 *  also starts with a logic-0 to ensure consistent timing.
+		 */
+		if(is_recieving)
+		{
+		//Compare with previous time.
+//		uint16_t delta_t = tim8_current_count-tim8_previous_count;
+		uint16_t delta_t = tim14_current_count-tim14_previous_count;
+		//If edge occured within 506us, ignore.
+		if(delta_t > (THRESHOLD_TICKS-1)/2)
+		{
+			rx_data[data_size] = curr_edge;
+			data_size++;
+		}
+		//Store previous time value for next edge
+//		tim8_previous_count = tim8_current_count;
+		}
 
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout
 		if (state == COLLISION)
@@ -654,21 +668,6 @@ void TIM2_IRQHandler(void)
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
 
-			//Receiver
-			if(is_recieving)
-			{
-				//Compare with previous time.
-				uint16_t delta_t = tim8_current_count-tim8_previous_count;
-				//uint16_t delta_t = tim14_current_count-tim14_previous_count;
-				//If edge occured within 506us, ignore.
-				if(delta_t > (THRESHOLD_TICKS-1)/2)
-				{
-					rx_data[data_size] = curr_edge;
-					data_size++;
-				}
-				//Store previous time value for next edge
-				tim8_previous_count = tim8_current_count;
-			}
 
 			// 1 to zero transition (idles high). Discard first edge.
 			if(prev_edge && !curr_edge)

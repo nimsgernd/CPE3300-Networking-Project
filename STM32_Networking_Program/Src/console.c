@@ -105,6 +105,10 @@ void user_prompt(void)
 		if(get_dataSize > 0)
 		{
 			printf("%s\n\r", get_ascii_data());
+#ifdef DE_NET_RX
+			printf("%d\n\r", get_dataSize());
+			printf("0x%x\n\r", *get_raw_data());
+#endif
 		}
 		else
 		{
