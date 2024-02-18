@@ -76,7 +76,7 @@ void user_prompt(void)
 
 	printf("net> ");
 	fgets(str, 99, stdin);
-	token1 = strtok(str," ");
+	token1 = strtok(str," \n\r");
 #ifdef DE_CONSOLE
 	printf("token1 = '%s'\n\r", token1);
 #endif

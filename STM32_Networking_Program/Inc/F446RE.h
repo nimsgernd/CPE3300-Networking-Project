@@ -30,9 +30,9 @@
  ******************************************************************************
  */
 
-#define DE_CONSOLE
+//#define DE_CONSOLE
 //#define DE_NET_MON
-//#define DE_NET_RX
+#define DE_NET_RX
 //#define DE_NET_TX
 
 /*
