@@ -640,10 +640,10 @@ void TIM2_IRQHandler(void)
 		if(is_recieving)
 		{
 		//Compare with previous time.
-//		uint16_t delta_t = tim8_current_count-tim8_previous_count;
-		uint16_t delta_t = tim14_current_count-tim14_previous_count;
+	//		uint16_t delta_t = tim8_current_count-tim8_previous_count;
+			uint16_t delta_t = tim14_current_count-tim14_previous_count;
 		//If edge occured within 506us, ignore.
-		if(delta_t > (THRESHOLD_TICKS-1)/2)
+		if(delta_t > (THRESHOLD_TICKS/2)-1)
 		{
 			rx_data[data_size] = curr_edge;
 			data_size++;
