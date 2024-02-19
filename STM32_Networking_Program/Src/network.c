@@ -448,8 +448,6 @@ static void assert_equal(char* actual, char* expected) {
  * @brief	Transmits the current bit pair in TIM2 CH1 ISR set at
  * 			500 uS.
  *
- *
- *
  */
 static void transmit(void)
 {
