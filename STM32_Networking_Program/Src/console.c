@@ -137,7 +137,13 @@ void user_prompt(void)
 			printf("%s\n\r", get_ascii_data());
 #ifdef DE_NET_RX
 			printf("%d\n\r", get_dataSize());
-			printf("0x%x\n\r", *get_raw_data());
+			int* data = get_raw_data();
+			for(int i = 0; i < get_dataSize(); i++)
+			{
+				printf("%i", data[i]);
+			}
+			printf("\n\r");
+			//printf("0x%x\n\r", *get_raw_data());
 #endif
 		}
 		else

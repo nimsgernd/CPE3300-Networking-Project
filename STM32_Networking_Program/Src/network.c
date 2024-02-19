@@ -285,7 +285,21 @@ int get_reciever(void)
  */
 int* get_raw_data(void)
 {
-	return rx_data;
+    int* rx_data_copy = (int*)calloc(data_size, sizeof(int));
+
+    // Check if memory allocation was successful
+    if (rx_data_copy == NULL) {
+        // Handle error (e.g., print an error message and return NULL)
+        printf("Error: Could not allocate memory for rx_data copy\n");
+        return NULL;
+    }
+
+    // Copy the contents of rx_data to rx_data_copy
+    for (int i = 0; i < data_size; i++) {
+        rx_data_copy[i] = rx_data[i];
+    }
+
+    return rx_data_copy;
 }
 
 
@@ -625,7 +639,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 			decode();
 
 			// Reset recived data for more data
-			reset_rx_data();
+			//reset_rx_data();
 
 
 
@@ -708,7 +722,13 @@ void TIM2_IRQHandler(void)
 		{
 		//Compare with previous time.
 	//		uint16_t delta_t = tim8_current_count-tim8_previous_count;
-			uint16_t delta_t = abs(tim14_current_count-tim14_previous_count);
+			uint16_t delta_t;
+			if (tim14_current_count >= tim14_previous_count) {
+			    delta_t = tim14_current_count - tim14_previous_count;
+			} else {
+			    // Handle counter rollover
+			    delta_t = (UINT16_MAX - tim14_previous_count) + tim14_current_count + 1;
+			}
 		//If edge occured within 506us, ignore.
 		if(delta_t > (THRESHOLD_TICKS/2)-1)
 		{
