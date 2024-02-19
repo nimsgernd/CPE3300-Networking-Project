@@ -9,4 +9,5 @@
 
 
 ## Project Structure
-- Input Pins: PA_6 -> TIM3_CH1
+- Input Pins: PB_3 -> TIM3_CH2
+- Output Pins: PB_1 -> TIM3_CH1
