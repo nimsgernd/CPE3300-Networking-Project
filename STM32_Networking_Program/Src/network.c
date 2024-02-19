@@ -766,39 +766,6 @@ void TIM2_IRQHandler(void)
 //		tim8->EGR |= UG;		// Reset count value
 //		tim8->CR1 |= CEN;
 
-		//Receiver
-		/**
-		 * NOTE: tim14 is also used as rx timer
-		 *  a high-to-low transition in the middle of the bit period.
-		 *  Thus, while in IDLE, the first edge that the receiver will see will be
-		 *  the transition in the middle of the bit period, thus, the second bit period
-		 *  starts 500 μs after the first falling edge in the transmission.
-		 *  If you are not yet supporting a header, ensure any data you receive
-		 *  also starts with a logic-0 to ensure consistent timing.
-		 */
-		if(is_recieving)
-		{
-		//Compare with previous time.
-	//		uint16_t delta_t = tim8_current_count-tim8_previous_count;
-			uint16_t delta_t;
-			if (tim14_current_count >= tim14_previous_count) {
-			    delta_t = tim14_current_count - tim14_previous_count;
-			} else {
-			    // Handle counter rollover
-			    delta_t = (UINT16_MAX - tim14_previous_count) + tim14_current_count + 1;
-			}
-		//If edge occured within 506us, ignore.
-		if(delta_t > (THRESHOLD_TICKS/2)-1)
-		{
-			rx_data[data_size] = curr_edge;
-			data_size++;
-			//store the count of the previous recorded edge
-			tim14_previous_count = tim14_current_count;
-		}
-		//Store previous time value for next edge
-//		tim8_previous_count = tim8_current_count;
-		}
-
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout
 		if (state == COLLISION)
 		{
@@ -821,6 +788,41 @@ void TIM2_IRQHandler(void)
 				is_recieving = 1;
 			}
 		}
+
+		//Receiver
+		/**
+		 * NOTE: tim14 is also used as rx timer
+		 *  a high-to-low transition in the middle of the bit period.
+		 *  Thus, while in IDLE, the first edge that the receiver will see will be
+		 *  the transition in the middle of the bit period, thus, the second bit period
+		 *  starts 500 μs after the first falling edge in the transmission.
+		 *  If you are not yet supporting a header, ensure any data you receive
+		 *  also starts with a logic-0 to ensure consistent timing.
+		 */
+		if(is_recieving)
+		{
+			//Compare with previous time.
+//			uint16_t delta_t = tim8_current_count-tim8_previous_count;
+			uint16_t delta_t;
+			if (tim14_current_count >= tim14_previous_count)
+			{
+				delta_t = tim14_current_count - tim14_previous_count;
+			} else {
+				// Handle counter rollover
+			    delta_t = (UINT16_MAX - tim14_previous_count) + tim14_current_count + 1;
+			}
+				// If edge occured within 506us, ignore.
+				if(delta_t > (THRESHOLD_TICKS/2)-1)
+				{
+					rx_data[data_size] = curr_edge;
+					data_size++;
+					//store the count of the previous recorded edge
+					tim14_previous_count = tim14_current_count;
+				}
+				//Store previous time value for next edge
+//				tim8_previous_count = tim8_current_count;
+			}
+
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
 	}

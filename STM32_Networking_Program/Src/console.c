@@ -133,12 +133,12 @@ void user_prompt(void)
 #ifdef DE_NET_RX
 			printf("%d\n\r", get_dataSize());
 			int* data = get_raw_data();
+			printf("0b");
 			for(int i = 0; i < get_dataSize(); i++)
 			{
 				printf("%i", data[i]);
 			}
 			printf("\n\r");
-			//printf("0x%x\n\r", *get_raw_data());
 #endif
 		}
 		else
