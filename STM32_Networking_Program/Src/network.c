@@ -5,8 +5,8 @@
  *			: Jack Maki			<makij@msoe.edu>
  *			: Daniel Nimsgern	<nimsgern@msoe.edu>
  * 			:
- * @brief	: Functions for initializing a network monitoring process and
- * 			: updating status LEDs.
+ * @brief	: Functions for interfacing with a manchester encoded computer
+ * 			: network.
  ******************************************************************************
  */
 
@@ -99,6 +99,8 @@ static uint16_t tim14_current_count = 0;
 static uint16_t tim14_previous_count = 0;
 static int new_message = 0;
 
+static uint8_t crc_table[256];
+
 /*
  ******************************************************************************
  * Function Prototypes
@@ -110,6 +112,8 @@ static void decode(void);
 static void reset_rx_data(void);
 static void assert_equal(char* actual, char* expected);
 static int bitArrayToInt(int *bitArray, int length);
+static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
+static uint8_t crc(char* array, int byte_len);
 
 /*
  ******************************************************************************
@@ -126,6 +130,8 @@ void monitor_init(void)
 	/* External Initializers */
 	// Initialize LED bar
 	led_init();
+
+	pop_crc_table(crc_table, 0x07);
 
 	/* RCC Settings */
 	// Enable clock for GPIOB
@@ -281,6 +287,15 @@ int get_reciever(void)
 }
 
 /**
+ * @brief	Relevant Setters/Getters.
+ *
+ */
+int get_dataSize(void)
+{
+	return data_size;
+}
+
+/**
  * @brief	Returns the raw rx buffer data
  */
 int* get_raw_data(void)
@@ -305,7 +320,8 @@ char* get_ascii_data(void)
  *
  */
 
-void encode(char* msg) {
+void encode(char* msg)
+{
     // Make sure to have enough size for Manchester encoding i.e., 2*bits
     transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
     transmission_len = 2 * strlen(msg) * CHAR_BIT;
@@ -562,7 +578,7 @@ static void transmit(void)
 }
 
 /**
- * @brief	frees recived data and resets to defaults
+ * @brief	frees received data and resets to defaults
  */
 static void reset_rx_data(void)
 {
@@ -595,11 +611,53 @@ void post_collision_delay(void)
 }
 
 /**
- * @brief	Relevant Setters/Getters.
+ * @brief
  *
+ * @param crc_table
+ * @param poly
  */
-int get_dataSize(void){
-	return data_size;
+void pop_crc_table(uint8_t crc_table[256], uint8_t poly)
+{
+	uint8_t crc = 0x80;
+	memset(crc_table, 0, 256);
+
+	for(int i = 1; i < 256; i <<= 1)
+	{
+		if(crc & 0x80)
+		{
+			crc = (crc << 1) ^ poly;
+		}
+		else
+		{
+			crc <<= 1;
+		}
+
+		for(int j = 0; j < i; j++)
+		{
+			crc_table[i + j] = crc ^ crc_table[j];
+		}
+	}
+}
+
+/**
+ * @brief
+ *
+ * @param array
+ * @param byte_len
+ * @return
+ */
+uint8_t crc(char* array, int byte_len)
+{
+	uint8_t i;
+	uint8_t crc = 0x0;
+
+	while(byte_len--)
+	{
+		i = (crc ^ *array++);
+		crc = (crc_table[i] ^ (crc << 8));
+	}
+
+	return crc;
 }
 
 /**

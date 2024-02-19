@@ -9,10 +9,6 @@
  ******************************************************************************
  */
 
-/**
- * IMPORTANT: INPUT SIGNAL ASSUMED TO BE ON ARDUINO HEADER/PIN PA_15!!!!
- */
-
 /*
  ******************************************************************************
  * Includes
@@ -46,8 +42,8 @@ static char * token2;
  ******************************************************************************
  */
 
-int addr_usr_find(char* user);
-char* usr_addr_find(int addr);
+static int addr_usr_find(char* user);
+static char* usr_addr_find(int addr);
 
 /*
  ******************************************************************************
@@ -73,7 +69,6 @@ void console_init(void)
  */
 void user_prompt(void)
 {
-
 	printf("net> ");
 	fgets(str, 99, stdin);
 	token1 = strtok(str," \n\r");
