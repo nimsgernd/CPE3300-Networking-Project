@@ -92,9 +92,6 @@ static int* rx_data;
 static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
-static int tim2_ch1_isr_entred = 0;
-//static uint16_t tim8_current_count = 0;
-//static uint16_t tim8_previous_count = 0;
 static uint16_t tim14_current_count = 0;
 static uint16_t tim14_previous_count = 0;
 static int new_message = 0;
@@ -446,115 +443,6 @@ static void assert_equal(char* actual, char* expected) {
     }
 }
 
-/**
- * @brief
- *
- */
-void test_decode(void) {
-    // Test 1: Decode a simple message
-    data_size = 48; // Set data size to match the provided bit values
-    rx_data = malloc(data_size * sizeof(int));
-    // Assigning values to rx_data: 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 1 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0
-    rx_data[0] = 1;
-    rx_data[1] = 0;
-
-    rx_data[2] = 0;
-    rx_data[3] = 1;
-
-    rx_data[4] = 1;
-    rx_data[5] = 0;
-
-    rx_data[6] = 1;
-    rx_data[7] = 0;
-
-    rx_data[8] = 0;
-    rx_data[9] = 1;
-
-    rx_data[10] = 1;
-    rx_data[11] = 0;
-
-    rx_data[12] = 1;
-    rx_data[13] = 0;
-
-    rx_data[14] = 1;
-    rx_data[15] = 0;
-
-    rx_data[16] = 1;
-    rx_data[17] = 0;
-
-    rx_data[18] = 0;
-    rx_data[19] = 1;
-
-    rx_data[20] = 0;
-    rx_data[21] = 1;
-
-    rx_data[22] = 1;
-    rx_data[23] = 0;
-
-    rx_data[24] = 0;
-    rx_data[25] = 1;
-
-    rx_data[26] = 1;
-    rx_data[27] = 0;
-
-    rx_data[28] = 1;
-    rx_data[29] = 0;
-
-    rx_data[30] = 0;
-    rx_data[31] = 1;
-
-
-    rx_data[32] = 1;
-    rx_data[33] = 0;
-
-    rx_data[34] = 0;
-    rx_data[35] = 1;
-
-    rx_data[36] = 0;
-    rx_data[37] = 1;
-
-    rx_data[38] = 1;
-    rx_data[39] = 0;
-
-    rx_data[40] = 1;
-    rx_data[41] = 0;
-
-    rx_data[42] = 0;
-    rx_data[43] = 1;
-
-    rx_data[44] = 0;
-    rx_data[45] = 1;
-
-    rx_data[46] = 0;
-    rx_data[47] = 1;
-
-
-    decode();
-    assert_equal(rx_decoded, "Hi");
-    free(rx_data);
-    free(rx_decoded);
-
-    // Test 2: Decode an empty message
-    data_size = 0;
-    rx_data = malloc(data_size * sizeof(int));
-    decode();
-    assert_equal(rx_decoded, "");
-    free(rx_data);
-    free(rx_decoded);
-
-    // Test 3: Decode a message with invalid Manchester encoding
-    data_size = 4;
-    rx_data = malloc(data_size * sizeof(int));
-    rx_data[0] = 1; rx_data[1] = 1; // Invalid encoding
-    rx_data[2] = 0; rx_data[3] = 1; // Valid encoding
-    decode();
-    // The decode function should print an error message and return early,
-    // so the decoded message should be empty
-    assert_equal(rx_decoded, "");
-    free(rx_data);
-    free(rx_decoded);
-}
-
 
 /**
  * @brief	Transmits the current bit pair in TIM2 CH1 ISR set at
@@ -691,8 +579,6 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		// End recieving.... reset reciever vars
     		is_recieving = 0;
 
-    		tim2_ch1_isr_entred = 0;
-
 			// Decode data i.e. 2 bits -> 1 bit, free rx_data, and reset params
 			decode();
 
@@ -742,9 +628,6 @@ void TIM2_IRQHandler(void)
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
 		}
-
-		tim2_ch1_isr_entred = 1;
-
 
 		// Clear interrupt flag manually since not reading from
 		tim2->SR = ~CC1IF;
