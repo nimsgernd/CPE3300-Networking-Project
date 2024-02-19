@@ -96,6 +96,10 @@ static int data_size = 0;		// Len of recieved data
 static uint16_t tim14_current_count = 0;
 static uint16_t tim14_previous_count = 0;
 static int new_message = 0;
+static int bufferInit = 0;
+static int numCharsReceived = 0;
+static int prevTime = 0;
+static int curTime = 0;
 
 static uint8_t crc_table[256];
 
@@ -107,7 +111,7 @@ static uint8_t crc_table[256];
 
 static void transmit(void);
 static void assert_equal(char* actual, char* expected);
-static uint8_t bitArrayToInt(uint8_t *bitArray, int length);
+static int bitArrayToInt(int *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
 static uint8_t crc(char* array, int byte_len);
 
@@ -368,7 +372,7 @@ void encode(char* msg)
 /**
  * @brief	Takes in a bit array and converts it to a single int.
  */
-static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
+static int bitArrayToInt(int *bitArray, int length) {
     int result = 0;
 
     for (int i = 0; i < length; i++) {
@@ -398,7 +402,7 @@ void decode(void)
     int len = data_size / 8;
 
     // Temp array to hold only ascii values
-    uint8_t* temp_ascii = (uint8_t*)calloc(CHAR_BIT,sizeof(uint8_t));
+    int* temp_ascii = (int*)calloc(CHAR_BIT,sizeof(int));
 
     // Iterate over all characters
     for(int i = 0; i < len; i++)
@@ -420,7 +424,7 @@ void decode(void)
 
     	}
 
-    	uint8_t char_ascii = bitArrayToInt(temp_ascii, CHAR_BIT);
+    	int char_ascii = bitArrayToInt(temp_ascii, CHAR_BIT);
     	rx_decoded[i] = (char)char_ascii;
     }
 
@@ -640,6 +644,45 @@ void TIM2_IRQHandler(void)
 
 		prev_edge = curr_edge;
 		curr_edge = (gpiob->IDR & GPIO_IDR_Px3)>>3;
+
+		// check for buffer initialization
+		if(bufferInit == 0){
+			bufferInit = 1;
+			numBitsReceived = 2;
+			numCharsReceived = 0;
+			receivedBits[0] = 1;
+			receivedBits[1] = 0;
+			prevTime = curTime;
+		}
+
+		// get timer count values
+		time = 0;
+		if(curTime >= prevTime){
+			time = curTime - prevTime;
+		} else {
+			//overflow
+			time = (UINT16_MAX - prevTime) + curTime;
+		}
+		prevTime = curTime;
+
+		if(bufferInit == 1){
+			//half period
+			if((time >= HALF_THRESHOLD_TICKS_MIN) && (time <= HALF_THRESHOLD_TICKS_MAX))
+			{
+				receivedBits[numBitsReceived] = bit;
+				numBitsReceived++;
+				prevBit = bit;
+			}
+			//full period
+			if((time >= THRESHOLD_TICKS_MIN) && (time <= THRESHOLD_TICKS_MAX))
+			{
+				receivedBits[numBitsReceived] = prevBit;
+				numBitsReceived++;
+				receivedBits[numBitsReceived] = bit;
+				numBitsReceived++;
+				prevBit = bit;
+			}
+		}
 
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
