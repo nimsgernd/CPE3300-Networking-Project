@@ -126,9 +126,13 @@ void user_prompt(void)
 	}
 	else if(!strcmp(token1,"rx"))
 	{
+		// Get Ascii Data
+		decode();
+
 		// Checks for a recieved message, prints it to console, then returns to command prompt
 		if(new_message_flag())
 		{
+
 			printf("%s\n\r", get_ascii_data());
 #ifdef DE_NET_RX
 			printf("%d\n\r", get_dataSize());
@@ -139,6 +143,9 @@ void user_prompt(void)
 				printf("%i", data[i]);
 			}
 			printf("\n\r");
+
+			// Reset recived data for more data
+			reset_rx_data();
 #endif
 		}
 		else

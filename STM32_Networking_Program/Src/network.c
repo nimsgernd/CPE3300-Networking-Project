@@ -105,8 +105,6 @@ static uint8_t crc_table[256];
  */
 
 static void transmit(void);
-static void decode(void);
-static void reset_rx_data(void);
 static void assert_equal(char* actual, char* expected);
 static int bitArrayToInt(int *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
@@ -385,7 +383,7 @@ static int bitArrayToInt(int *bitArray, int length) {
 /**
  * @brief 	Used inside the reciever to decode the manchester encoded data into ascii
  */
-static void decode(void)
+void decode(void)
 {
     rx_decoded = (char*)calloc(((data_size / CHAR_BIT*2) + 1),sizeof(char));
 
@@ -480,7 +478,7 @@ static void transmit(void)
 /**
  * @brief	frees received data and resets to defaults
  */
-static void reset_rx_data(void)
+void reset_rx_data(void)
 {
     data_size = 0;	// array begins empty
 
@@ -577,14 +575,6 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		// End recieving.... reset reciever vars
     		is_recieving = 0;
 
-			// Decode data i.e. 2 bits -> 1 bit, free rx_data, and reset params
-			decode();
-
-			// Reset recived data for more data
-			reset_rx_data();
-
-
-
     		// Check line state. High = idle, Low = collision
     		if (gpiob->IDR & GPIO_IDR_Px3)
     		{
@@ -640,12 +630,7 @@ void TIM2_IRQHandler(void)
 
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
-//		tim8_current_count = tim8->CNT;
 		tim14_current_count = tim14->CNT;
-
-		// Once edge detected, start 1.13 ms timer
-//		tim8->EGR |= UG;		// Reset count value
-//		tim8->CR1 |= CEN;
 
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout
 		if (state == COLLISION)
@@ -682,8 +667,6 @@ void TIM2_IRQHandler(void)
 		 */
 		if(is_recieving)
 		{
-			//Compare with previous time.
-//			uint16_t delta_t = tim8_current_count-tim8_previous_count;
 			uint16_t delta_t;
 			if (tim14_current_count >= tim14_previous_count)
 			{
@@ -700,8 +683,7 @@ void TIM2_IRQHandler(void)
 					//store the count of the previous recorded edge
 					tim14_previous_count = tim14_current_count;
 				}
-				//Store previous time value for next edge
-//				tim8_previous_count = tim8_current_count;
+
 			}
 
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
