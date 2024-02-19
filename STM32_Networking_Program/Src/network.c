@@ -30,6 +30,7 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <math.h>
 #include <sys/types.h>
 
 // Project
@@ -625,7 +626,7 @@ void TIM2_IRQHandler(void)
 
 		// Once edge detected, start 1.13 ms timer
 //		tim8->EGR |= UG;		// Reset count value
-		tim8->CR1 |= CEN;
+//		tim8->CR1 |= CEN;
 
 		//Receiver
 		/**
@@ -641,7 +642,7 @@ void TIM2_IRQHandler(void)
 		{
 		//Compare with previous time.
 	//		uint16_t delta_t = tim8_current_count-tim8_previous_count;
-			uint16_t delta_t = tim14_current_count-tim14_previous_count;
+			uint16_t delta_t = abs(tim14_current_count-tim14_previous_count);
 		//If edge occured within 506us, ignore.
 		if(delta_t > (THRESHOLD_TICKS/2)-1)
 		{
