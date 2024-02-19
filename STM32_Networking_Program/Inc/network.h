@@ -73,7 +73,7 @@ typedef struct
 	uint8_t DEST;
 	uint8_t LEN;
 	uint8_t CRC;
-	char MSG [MAX_MSG_LEN_BYTES];
+	char* MSG;
 	uint8_t TRAILER;
 
 }packet;
