@@ -70,7 +70,7 @@ void console_init(void)
 void user_prompt(void)
 {
 	printf("net> ");
-	fgets(str, 99, stdin);
+	fgets(str, 253, stdin);
 	token1 = strtok(str," \n\r");
 #ifdef DE_CONSOLE
 	printf("token1 = '%s'\n\r", token1);

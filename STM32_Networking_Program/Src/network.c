@@ -399,7 +399,7 @@ static void decode(void)
     }
 
     // One ascii character is 1 byte which is encoded to 16 bits
-    int len = data_size / 16;
+    int len = data_size / 8;
 
     // Temp array to hold only ascii values
     int* temp_ascii = (int*)calloc(CHAR_BIT,sizeof(int));
@@ -410,12 +410,12 @@ static void decode(void)
 		int ascii_index = 0;
 
     	// For each of the 16 bits that reps 1 byte
-    	for(int j = 1; j < CHAR_BIT*2; j+=2)
+    	for(int j = 0; j < CHAR_BIT; j++)
     	{
         // The first bit of the pair should be the inverse of the second bit
         // If this is not the case, there may be an error in the encoded data
 
-    		int rx_index = j + (i*(CHAR_BIT*2));
+    		int rx_index = j + (i*(CHAR_BIT));
 
     		int ascii_bit = rx_data[rx_index];
     		temp_ascii[ascii_index] = ascii_bit;
@@ -697,7 +697,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
 			decode();
 
 			// Reset recived data for more data
-			//reset_rx_data();
+			reset_rx_data();
 
 
 
