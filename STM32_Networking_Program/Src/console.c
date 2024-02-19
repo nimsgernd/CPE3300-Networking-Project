@@ -32,7 +32,7 @@
  ******************************************************************************
  */
 
-static char str[100];
+static char str[253];
 static char * token1;
 static char * token2;
 
