@@ -34,7 +34,7 @@
 #include <sys/types.h>
 
 // Project
-#include "delay.h"
+//#include "delay.h"
 #include "F446RE.h"
 #include "led.h"
 #include "network.h"
@@ -59,6 +59,7 @@
 static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
 static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
+static volatile STK *const stk = (STK *)STK_BASE;
 static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
 static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
@@ -69,7 +70,7 @@ static packet reception;
 
 // State
 static State state = BUSY;	// Current state
-static Delay busy_delay = NO;	// Collision to Busy delay flag
+static Delay tx_delay = NO;	// Collision to Busy delay flag
 
 // Timer Variables
 static volatile char was_edge = 0;
@@ -496,16 +497,17 @@ void reset_rx_data(void)
  */
 void post_collision_delay(void)
 {
-	// Reads count register from free running counter
-	uint32_t count = tim14->CNT;
 
-	// Scale count value by the scaler
-	uint32_t microSecDelay = count * TIM_TO_MICROSEC_SCALAR;
+	tx_delay = YES;
 
-	// Delay by this randomized time
-	delay_us(microSecDelay);
+	stk->CTRL &= STK_CTRL_DIS;
 
-	busy_delay = NO;
+	stk->LOAD = (int)((double)tim14->CNT * TX_DELAY_SCALAR);
+
+	stk->VAL = 0;
+
+	stk->CTRL |= (STK_CTRL_EN | STK_CTRL_INT_EN | STK_CTRL_CLK_AHB);
+
 }
 
 /**
@@ -556,6 +558,17 @@ uint8_t crc(char* array, int byte_len)
 	}
 
 	return crc;
+}
+
+/**
+ * @brief Handler for the post collision delay flag
+ *
+ */
+void SysTick_Handler(void)
+{
+	stk->CTRL &= STK_CTRL_DIS;
+
+	tx_delay = NO;
 }
 
 /**
@@ -611,7 +624,7 @@ void TIM2_IRQHandler(void)
 	{
 		// STARTS transmitting in IDLE, but can also in BUSY after... CANNOT
 		// transmit in COLLISION
-		if(busy_delay == NO && (is_transmitting || state == IDLE))
+		if(tx_delay == NO && (is_transmitting || state == IDLE))
 		{
 			// Transmit encoded half-bits i.e. 1 -> 1 THEN 0
 			transmit();
@@ -637,8 +650,8 @@ void TIM2_IRQHandler(void)
 		{
 			state = BUSY;
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
-		//	busy_delay = YES;	// TODO: Enable once retransmit functionality
-								// 		 is added.
+
+			post_collision_delay();
 		}
 		// When state goes IDLE -> BUSY, begin receiving data
 		else if(state == IDLE)

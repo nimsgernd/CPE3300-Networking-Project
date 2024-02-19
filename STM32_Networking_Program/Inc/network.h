@@ -18,12 +18,12 @@
  */
 
 #define RT_MAX_VALUE 			0x7F7F7F
-#define TIM_TO_MICROSEC_SCALAR	15
-#define RXDATA_INITSIZE_BYTES 261
-#define RXDATA_INITSIZE_BITS (CHAR_BIT * RXDATA_INITSIZE_BYTES)             // 40 Bytes
-#define BYTE_LEN 8 	// 1 Byte = 8 bits
-#define MAX_MSG_LEN_BYTES 255 // Msg section in data link layer supports up to 255 bytes
-#define MAX_MSG_LEN_BITS MAX_MSG_LEN_BYTES * BYTE_LEN // 255 bytes in bits
+#define TX_DELAY_SCALAR			((double)16000/(double)65535)
+#define RXDATA_INITSIZE_BYTES 	261
+#define RXDATA_INITSIZE_BITS 	(CHAR_BIT * RXDATA_INITSIZE_BYTES) // 40 Bytes
+#define BYTE_LEN 				8 	// 1 Byte = 8 bits
+#define MAX_MSG_LEN_BYTES 		255 // Msg section in data link layer supports up to 255 bytes
+#define MAX_MSG_LEN_BITS 		MAX_MSG_LEN_BYTES * BYTE_LEN // 255 bytes in bits
 
 /*
  ******************************************************************************

@@ -50,16 +50,17 @@
  ******************************************************************************
  */
 
-#define RCC_BASE			0x40023800
-#define GPIOB_BASE			0x40020400
-#define GPIOA_BASE			0x40020000
 #define TIM2_BASE 			0x40000000
-#define TIM8_BASE 			0x40010400
 #define TIM14_BASE			0x40002000
 #define RTC_BASE			0x40002800
+#define TIM8_BASE 			0x40010400
+#define SYSCFG_EXTICR2_BASE 0x4001380C
+#define GPIOA_BASE			0x40020000
+#define GPIOB_BASE			0x40020400
+#define RCC_BASE			0x40023800
+#define STK_BASE			0xE000E010
 #define NVIC_BASE			0xE000E100
 #define NVIC_ISER1			0xE000E104
-#define SYSCFG_EXTICR2_BASE 0x4001380C
 
 /*
  ******************************************************************************
@@ -254,6 +255,21 @@
 
 /*
  ******************************************************************************
+ * Systick bits
+ ******************************************************************************
+ */
+
+// Control Register
+#define STK_CTRL_EN				(0b1 << 0)
+#define STK_CTRL_DIS			~(0b1 << 0)
+#define STK_CTRL_INT_EN			(0b1 << 1)
+#define STK_CTRL_INT_DIS		~(0b1 << 0)
+#define STK_CTRL_CLK_AHB		(0b1 << 2)
+#define STK_CTRL_CLK_AHB_DIV_8	~(0b1 << 2)
+#define STK_CTRL_COUNT_FLG		(0b1 << 16)
+
+/*
+ ******************************************************************************
  * CONTROLLER STRUCTS
  ******************************************************************************
  */
@@ -428,6 +444,13 @@ typedef struct{
 	volatile uint32_t CMPCR;
 	volatile uint32_t CFGR;
 }SYSCFG;
+
+typedef struct{
+	volatile uint32_t CTRL;
+	volatile uint32_t LOAD;
+	volatile uint32_t VAL;
+	volatile uint32_t CALIB;
+}STK;
 
 typedef struct{
 	volatile uint32_t IMR;
