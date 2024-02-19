@@ -63,7 +63,8 @@ static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 
 // TODO: Implement packet struct
-packet pkt;
+static packet transmission = {0x55,0x00,0x00,0x00,0x00,NULL,0xAA};
+static packet reception;
 
 // State
 static State state = BUSY;	// Current state
@@ -91,10 +92,12 @@ static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
 static int tim2_ch1_isr_entred = 0;
-static uint16_t tim8_current_count = 0;
-static uint16_t tim8_previous_count = 0;
+//static uint16_t tim8_current_count = 0;
+//static uint16_t tim8_previous_count = 0;
 static uint16_t tim14_current_count = 0;
 static uint16_t tim14_previous_count = 0;
+static int new_message = 0;
+
 /*
  ******************************************************************************
  * Function Prototypes
@@ -106,6 +109,7 @@ static void decode(void);
 static void reset_rx_data(void);
 static void assert_equal(char* actual, char* expected);
 static int bitArrayToInt(int *bitArray, int length);
+
 /*
  ******************************************************************************
  * Function Definitions
@@ -225,9 +229,58 @@ void clear(void)
 	free(rx_decoded);
 }
 
+/**
+ * @brief
+ *
+ * @return
+ */
+int new_message_flag(void)
+{
+	return new_message;
+}
 
 /**
- * @breif	Returns the raw rx buffer data
+ * @brief
+ *
+ * @param addr
+ */
+void set_sender(int addr)
+{
+	transmission.SRC = addr;
+}
+
+/**
+ * @brief
+ *
+ * @param addr
+ */
+void set_reciever(int addr)
+{
+	transmission.DEST = addr;
+}
+
+/**
+ * @brief
+ *
+ * @return
+ */
+int get_sender(void)
+{
+	return transmission.SRC;
+}
+
+/**
+ * @brief
+ *
+ * @return
+ */
+int get_reciever(void)
+{
+	return transmission.DEST;
+}
+
+/**
+ * @brief	Returns the raw rx buffer data
  */
 int* get_raw_data(void)
 {
@@ -240,6 +293,7 @@ int* get_raw_data(void)
  */
 char* get_ascii_data(void)
 {
+	new_message = 0;
 	return rx_decoded;
 }
 
@@ -301,7 +355,7 @@ static int bitArrayToInt(int *bitArray, int length) {
 }
 
 /**
- * @breif 	Used inside the reciever to decode the manchester encoded data into ascii
+ * @brief 	Used inside the reciever to decode the manchester encoded data into ascii
  */
 static void decode(void)
 {
@@ -343,16 +397,28 @@ static void decode(void)
     	rx_decoded[i] = (char)char_ascii;
     }
 
+    new_message = 1;
+
     free(temp_ascii);
 
 }
 
+/**
+ * @brief
+ *
+ * @param actual
+ * @param expected
+ */
 static void assert_equal(char* actual, char* expected) {
     if (strcmp(actual, expected) != 0) {
         printf("Assertion failed: expected \"%s\", got \"%s\"\n\r", expected, actual);
     }
 }
 
+/**
+ * @brief
+ *
+ */
 void test_decode(void) {
     // Test 1: Decode a simple message
     data_size = 48; // Set data size to match the provided bit values

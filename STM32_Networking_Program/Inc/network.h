@@ -87,13 +87,18 @@ extern void monitor_init(void);
 extern void rx_init(void);
 extern void embiggen(void);
 extern void clear(void);
+extern int new_message_flag(void);
+void set_sender(int addr);
+void set_reciever(int addr);
+int get_sender(void);
+int get_reciever(void);
+extern int* get_raw_data(void);
+extern char* get_ascii_data(void);
 extern int get_dataSize(void);
 extern void encode(char* msg);
+extern void test_decode(void);
 extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);
 extern void TIM2_IRQHandler(void);
-extern int* get_raw_data(void);
-extern char* get_ascii_data(void);
-extern void test_decode(void);
 
 #endif

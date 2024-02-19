@@ -36,12 +36,9 @@
  ******************************************************************************
  */
 
-char str[100];
-char * token1;
-char * token2;
-char * token3;
-
-packet transmission = {0x55,0x0,0x0,0x0,0x0,NULL,0x0};
+static char str[100];
+static char * token1;
+static char * token2;
 
 /*
  ******************************************************************************
@@ -94,18 +91,48 @@ void user_prompt(void)
 	{
 		if(token2)
 		{
-			encode(token2);
-			printf("transmitting '%s'...\n\r",token2);
+			if(get_sender())
+			{
+				if(get_reciever())
+				{
+					// TODO need to use packet for next milestone
+					encode(token2);
+					printf("transmitting '%s'...\n\r",token2);
+				}
+				else
+				{
+					printf("Recipient not set\n\r");
+				}
+			}
+			else
+			{
+				printf("User not set\n\r");
+			}
 		}
 		else
 		{
 			printf("Need string to transmit\n\r");
 		}
 	}
+	else if(!strcmp(token1,"btx"))
+	{
+		if(token2)
+		{
+			int temp = get_reciever();
+			set_reciever(0xFF);
+			encode(token2); // TODO need to add packet for next milestone
+			printf("broadcasting '%s'...\n\r",token2);
+			set_reciever(temp);
+		}
+		else
+		{
+			printf("Need string to broadcast\n\r");
+		}
+	}
 	else if(!strcmp(token1,"rx"))
 	{
 		// Checks for a recieved message, prints it to console, then returns to command prompt
-		if(get_dataSize > 0)
+		if(new_message_flag())
 		{
 			printf("%s\n\r", get_ascii_data());
 #ifdef DE_NET_RX
@@ -115,26 +142,42 @@ void user_prompt(void)
 		}
 		else
 		{
-			printf("No data recieved\n\r");
+			printf("No new messages\n\r");
 		}
 	}
-	else if (!strcmp(token1,"usr"))
+	else if(!strcmp(token1,"usr"))
 	{
-
+		int addr = addr_usr_find(token2);
+		if(addr != 0x00)
+		{
+			set_sender(addr);
+		}
+		else
+		{
+			printf("Invalid user name\n\r");
+		}
 	}
-	else if (!strcmp(token1,"r"))
+	else if(!strcmp(token1,"recip"))
+	{
+		int addr = addr_usr_find(token2);
+		if(addr != 0x00)
+		{
+			set_reciever(addr);
+		}
+		else
+		{
+			printf("Invalid user name\n\r");
+		}
+	}
+	else if(!strcmp(token1,"r"))
 	{
 		printf("Console is now in RECEIVER TEST MODE\n\r");
 		for(;;)
 		{
 			// If there's data inside the buffer, then print it
-			if(get_dataSize() > 0)
+			if(new_message_flag())
 			{
-				int* data = get_raw_data();
-				for (int i = 0; i < get_dataSize(); i++) {
-					printf("%c", (char)data[i]);
-				}
-				printf("\n\r");
+				printf("%s\n\r", get_ascii_data());
 			}
 			// Give time for transmissions to complete before reading them
 			delay_s(1);
