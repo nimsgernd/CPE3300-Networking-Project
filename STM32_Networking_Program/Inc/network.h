@@ -43,17 +43,9 @@
 // THIS IS INSIDE IDLE THRESHOLD (1.113 ms - 1.188 ms) and
 // COLLISION TRESHOLD (1.04 ms - 1.14 ms)
 #define ADJUSTED_SIGNAL_PERIOD_US (NOMINAL_SIGNAL_PERIOD_US + SIGNAL_PERIOD_TOLERANCE_US)
-// new define to use for reciever without interfering with old code
-#define ADJUSTED_SIGNAL_PERIOD_US_MAX (NOMINAL_SIGNAL_PERIOD_US + SIGNAL_PERIOD_TOLERANCE_US)
-#define ADJUSTED_SIGNAL_PERIOD_US_MIN (NOMINAL_SIGNAL_PERIOD_US - SIGNAL_PERIOD_TOLERANCE_US)
 
 // Number of ticks = Timer frequency (Hz) * Desired period (s)
 #define THRESHOLD_TICKS (int)(F_CPU * (long long)ADJUSTED_SIGNAL_PERIOD_US*1e-6)
-// new define to use for reciever without interfering with old code
-#define THRESHOLD_TICKS_MAX (int)(F_CPU * (long long)ADJUSTED_SIGNAL_PERIOD_US_MAX*1e-6)
-#define THRESHOLD_TICKS_MIN (int)(F_CPU * (long long)ADJUSTED_SIGNAL_PERIOD_US_MIN*1e-6)
-#define HALF_THRESHOLD_TICKS_MAX THRESHOLD_TICKS_MAX/2
-#define HALF_THRESHOLD_TICKS_MIN THRESHOLD_TICKS_MIN/2
 
 /*
  ******************************************************************************
