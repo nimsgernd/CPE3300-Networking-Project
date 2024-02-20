@@ -115,8 +115,8 @@ void user_prompt(void)
 					tpacket.MSG = token2;
 					tpacket.TRAILER = 0xAA;
 
-					//encode(token2);
-					encode(tpacket);
+					encode(token2);
+					//encode(tpacket);
 					printf("transmitting '%s'...\n\r",token2);
 				}
 				else
