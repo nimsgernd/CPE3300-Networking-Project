@@ -24,6 +24,7 @@
 #define BYTE_LEN 				8 	// 1 Byte = 8 bits
 #define MAX_MSG_LEN_BYTES 		255 // Msg section in data link layer supports up to 255 bytes
 #define MAX_MSG_LEN_BITS 		MAX_MSG_LEN_BYTES * BYTE_LEN // 255 bytes in bits
+#define DECIMAL					10
 
 /*
  ******************************************************************************
