@@ -91,7 +91,6 @@ static int is_recieving = 0;
 // Bit Reception Buffer
 static volatile int rx_data[RXDATA_INITSIZE_BITS];
 static char* rx_decoded;
-static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
 static uint16_t tim14_current_count = 0;
 static uint16_t tim14_previous_count = 0;
@@ -106,7 +105,6 @@ static uint8_t crc_table[256];
  */
 
 static void transmit(void);
-static void assert_equal(char* actual, char* expected);
 static uint8_t bitArrayToInt(uint8_t *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
 static uint8_t crc(char* array, int byte_len);
@@ -126,6 +124,8 @@ void monitor_init(void)
 	/* External Initializers */
 	// Initialize LED bar
 	led_init();
+
+    data_size = 0;	// array begins empty
 
 	pop_crc_table(crc_table, 0x07);
 
@@ -200,26 +200,6 @@ void monitor_init(void)
 	tim14->CR1 |= CEN;
 }
 
-/**
- * @brief	Initializes the receiving buffer.
- *
- */
-void rx_init(void)
-{
-	//initialize 40 Bytes to store received transmissions. calloc(n_items, item_size);
-//    rx_data = calloc(array_size, sizeof(int));
-    data_size = 0;	// array begins empty
-}
-
-/**
- * @brief	Increases the receiving buffer by 5 bytes.
- *
- */
-void embiggen(void)
-{
-	array_size += RXDATA_INITSIZE_BYTES;
-//	rx_data = realloc(rx_data, array_size*sizeof(int));
-}
 
 /**
  * @brief	Frees the dynamically allocated memory
@@ -228,7 +208,6 @@ void embiggen(void)
  */
 void clear(void)
 {
-//	free(rx_data);
 	free(rx_decoded);
 }
 
@@ -430,17 +409,6 @@ void decode(void)
 
 }
 
-/**
- * @brief
- *
- * @param actual
- * @param expected
- */
-static void assert_equal(char* actual, char* expected) {
-    if (strcmp(actual, expected) != 0) {
-        printf("Assertion failed: expected \"%s\", got \"%s\"\n\r", expected, actual);
-    }
-}
 
 
 /**
@@ -482,12 +450,6 @@ static void transmit(void)
 void reset_rx_data(void)
 {
     data_size = 0;	// array begins empty
-
-	// Reset array size
-	array_size = RXDATA_INITSIZE_BITS;
-
-	// Reallocate array to init amount of bytes i.e. 40
-//	rx_data = (int*)realloc(rx_data, RXDATA_INITSIZE_BYTES*sizeof(int));
 }
 
 /**
@@ -680,6 +642,11 @@ void TIM2_IRQHandler(void)
 		 */
 		if(is_recieving)
 		{
+			if(curr_edge == prev_edge)
+			{
+				rx_data[0] = '0';
+				data_size++;
+			}
 			uint16_t delta_t;
 			if (tim14_current_count >= tim14_previous_count)
 			{
