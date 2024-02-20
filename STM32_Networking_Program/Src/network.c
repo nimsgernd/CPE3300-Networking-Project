@@ -93,14 +93,12 @@ static int* rx_data;
 static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
-static uint16_t tim14_current_count = 0;
-static uint16_t tim14_previous_count = 0;
 static int new_message = 0;
 static int bufferInit = 0;
 static int numCharsReceived = 0;
+static int numBitsReceived = 0;
 static int prevTime = 0;
 static int curTime = 0;
-static int time = 0;
 
 static uint8_t crc_table[256];
 
@@ -416,7 +414,7 @@ void decode(void)
         // The first bit of the pair should be the inverse of the second bit
         // If this is not the case, there may be an error in the encoded data
 
-    		int rx_index = j + (i*(CHAR_BIT));
+    		int rx_index = j + (i*(CHAR_BIT))+2;
 
     		int ascii_bit = rx_data[rx_index];
     		temp_ascii[ascii_index] = ascii_bit;
@@ -593,6 +591,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		// End recieving.... reset reciever vars
     		is_recieving = 0;
 
+    		bufferInit = 0;
+
     		// Check line state. High = idle, Low = collision
     		if (gpiob->IDR & GPIO_IDR_Px3)
     		{
@@ -624,6 +624,8 @@ void TIM8_UP_TIM13_IRQHandler(void)
  */
 void TIM2_IRQHandler(void)
 {
+	uint16_t delta_t = 0;
+
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
 									 // every half-bit period "500 us" for transmitter
 	{
@@ -642,7 +644,6 @@ void TIM2_IRQHandler(void)
 	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on
 						  // channel 2
 	{
-		prev_edge = curr_edge;
 		curr_edge = (gpiob->IDR & GPIO_IDR_Px3)>>3;
 		curTime = tim14->CNT;
 		was_edge = 1;
@@ -676,38 +677,39 @@ void TIM2_IRQHandler(void)
 			if(bufferInit == 0)
 			{
 				bufferInit = 1;
-				numBitsReceived = 2;
-				numCharsReceived = 0;
-				receivedBits[0] = 1;
-				receivedBits[1] = 0;
+//				numBitsReceived = 2;
+//				numCharsReceived = 0;
+				rx_data[0] = 1;
+				rx_data[1] = 0;
 				prevTime = curTime;
 			}
 			// get timer count values
-			time = 0;
+			delta_t = 0;
 			if(curTime >= prevTime){
-				time = curTime - prevTime;
+				delta_t = curTime - prevTime;
 			} else {
 				//overflow
-				time = (UINT16_MAX - prevTime) + curTime;
+				delta_t = (UINT16_MAX - prevTime) + curTime;
 			}
 			prevTime = curTime;
 
 			if(bufferInit == 1){
 				//half period
-				if((time >= HALF_THRESHOLD_TICKS_MIN) && (time <= HALF_THRESHOLD_TICKS_MAX))
+				if((delta_t >= HALF_THRESHOLD_TICKS_MIN) && (delta_t <= HALF_THRESHOLD_TICKS_MAX))
 				{
-					rx_data[data_size] = bit;
+					rx_data[data_size] = curr_edge;
 					data_size++;
-					prevBit = bit;
+					prev_edge = curr_edge;
+
 				}
 				//full period
-				if((time >= THRESHOLD_TICKS_MIN) && (time <= THRESHOLD_TICKS_MAX))
+				if((delta_t >= THRESHOLD_TICKS_MIN) && (delta_t <= THRESHOLD_TICKS_MAX))
 				{
-					rx_data[data_size] = prevBit;
+					rx_data[data_size] = prev_edge;
 					data_size++;
-					rx_data[data_size] = bit;
+					rx_data[data_size] = curr_edge;
 					data_size++;
-					prevBit = bit;
+					prev_edge = curr_edge;
 				}
 			}
 		}
