@@ -328,12 +328,7 @@ char* get_ascii_data(void)
  *
  * @note The caller is responsible for freeing the memory allocated for the encoded data.
  */
-<<<<<<< HEAD
-
 void encode(packet tpacket)
-=======
-void encode(char* msg)
->>>>>>> e664e6a67283b565b23e122a09929abb7f756be3
 {
     // Make sure to have enough size in the msg buffer for the original message + packet data
 	char* msg = (char*)malloc(strlen(msg) * CHAR_BIT * sizeof(int) + 6*sizeof(uint16_t));
