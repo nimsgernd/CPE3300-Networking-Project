@@ -502,7 +502,7 @@ void post_collision_delay(void)
 
 	stk->CTRL &= STK_CTRL_DIS;
 
-	stk->LOAD = (int)((double)tim14->CNT * TX_DELAY_SCALAR);
+	stk->LOAD = (uint32_t)((double)tim14->CNT * TX_DELAY_SCALAR);
 
 	stk->VAL = 0;
 
