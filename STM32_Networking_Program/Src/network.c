@@ -100,6 +100,7 @@ static int bufferInit = 0;
 static int numCharsReceived = 0;
 static int prevTime = 0;
 static int curTime = 0;
+static int time = 0;
 
 static uint8_t crc_table[256];
 
@@ -641,52 +642,10 @@ void TIM2_IRQHandler(void)
 	if (tim2->SR & CC2IF) // if the interrupt source is a capture event on
 						  // channel 2
 	{
-
 		prev_edge = curr_edge;
 		curr_edge = (gpiob->IDR & GPIO_IDR_Px3)>>3;
-
-		// check for buffer initialization
-		if(bufferInit == 0){
-			bufferInit = 1;
-			numBitsReceived = 2;
-			numCharsReceived = 0;
-			receivedBits[0] = 1;
-			receivedBits[1] = 0;
-			prevTime = curTime;
-		}
-
-		// get timer count values
-		time = 0;
-		if(curTime >= prevTime){
-			time = curTime - prevTime;
-		} else {
-			//overflow
-			time = (UINT16_MAX - prevTime) + curTime;
-		}
-		prevTime = curTime;
-
-		if(bufferInit == 1){
-			//half period
-			if((time >= HALF_THRESHOLD_TICKS_MIN) && (time <= HALF_THRESHOLD_TICKS_MAX))
-			{
-				receivedBits[numBitsReceived] = bit;
-				numBitsReceived++;
-				prevBit = bit;
-			}
-			//full period
-			if((time >= THRESHOLD_TICKS_MIN) && (time <= THRESHOLD_TICKS_MAX))
-			{
-				receivedBits[numBitsReceived] = prevBit;
-				numBitsReceived++;
-				receivedBits[numBitsReceived] = bit;
-				numBitsReceived++;
-				prevBit = bit;
-			}
-		}
-
-		// Store count values at the time of the most recent edge
+		curTime = tim14->CNT;
 		was_edge = 1;
-		tim14_current_count = tim14->CNT;
 
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout
 		if (state == COLLISION)
@@ -710,38 +669,48 @@ void TIM2_IRQHandler(void)
 				is_recieving = 1;
 			}
 		}
-
-		//Receiver
-		/**
-		 * NOTE: tim14 is also used as rx timer
-		 *  a high-to-low transition in the middle of the bit period.
-		 *  Thus, while in IDLE, the first edge that the receiver will see will be
-		 *  the transition in the middle of the bit period, thus, the second bit period
-		 *  starts 500 μs after the first falling edge in the transmission.
-		 *  If you are not yet supporting a header, ensure any data you receive
-		 *  also starts with a logic-0 to ensure consistent timing.
-		 */
-		if(is_recieving)
-		{
-			uint16_t delta_t;
-			if (tim14_current_count >= tim14_previous_count)
+		
+		//RECEIVER CODE
+		if(is_recieving){
+			// check for buffer initialization
+			if(bufferInit == 0)
 			{
-				delta_t = tim14_current_count - tim14_previous_count;
+				bufferInit = 1;
+				numBitsReceived = 2;
+				numCharsReceived = 0;
+				receivedBits[0] = 1;
+				receivedBits[1] = 0;
+				prevTime = curTime;
+			}
+			// get timer count values
+			time = 0;
+			if(curTime >= prevTime){
+				time = curTime - prevTime;
 			} else {
-				// Handle counter rollover
-			    delta_t = (UINT16_MAX - tim14_previous_count) + tim14_current_count + 1;
+				//overflow
+				time = (UINT16_MAX - prevTime) + curTime;
 			}
-				// If edge occured within 506us, ignore.
-				if(delta_t > (THRESHOLD_TICKS/2)-1)
+			prevTime = curTime;
+
+			if(bufferInit == 1){
+				//half period
+				if((time >= HALF_THRESHOLD_TICKS_MIN) && (time <= HALF_THRESHOLD_TICKS_MAX))
 				{
-					rx_data[data_size] = curr_edge;
+					rx_data[data_size] = bit;
 					data_size++;
-					//store the count of the previous recorded edge
-					tim14_previous_count = tim14_current_count;
+					prevBit = bit;
 				}
-
+				//full period
+				if((time >= THRESHOLD_TICKS_MIN) && (time <= THRESHOLD_TICKS_MAX))
+				{
+					rx_data[data_size] = prevBit;
+					data_size++;
+					rx_data[data_size] = bit;
+					data_size++;
+					prevBit = bit;
+				}
 			}
-
+		}
 		tim2->SR = ~CC2IF; // Clear the interrupt flag manually/by software if
 							// not set by capture event on channel 2
 	}
