@@ -84,8 +84,6 @@ typedef struct
  */
 
 extern void monitor_init(void);
-extern void rx_init(void);
-extern void embiggen(void);
 extern void clear(void);
 extern int new_message_flag(void);
 void set_sender(int addr);

@@ -66,9 +66,6 @@ int main(void)
 	// Initialize program console
 	console_init();
 
-	// Intitalize reciever
-	rx_init();
-
 #ifdef DE_NET_RX
 	test_decode();
 #endif
