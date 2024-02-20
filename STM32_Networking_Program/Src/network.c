@@ -309,9 +309,16 @@ char* get_ascii_data(void)
  *
  */
 
-void encode(char* msg)
+void encode(packet tpacket)
 {
-    // Make sure to have enough size for Manchester encoding i.e., 2*bits
+    // Make sure to have enough size in the msg buffer for the original message + packet data
+	char* msg = (char*)malloc(strlen(msg) * CHAR_BIT * sizeof(int) + 6*sizeof(uint16_t));
+	snprintf(msg, 303, "%x%x%x%x%x%s%x", tpacket.PREAMBLE, tpacket.SRC, tpacket.DEST,
+			tpacket.LEN, tpacket.CRC, tpacket.MSG, tpacket.TRAILER);
+	//debug
+	printf("packet string: %s\n",msg);
+
+	// Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
     transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
     transmission_len = 2 * strlen(msg) * CHAR_BIT;
 
@@ -417,7 +424,7 @@ void decode(void)
  *
  */
 static void transmit(void)
-{
+{	
 	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
 	if(transmission_data != NULL)
