@@ -1,13 +1,16 @@
 /**
  ******************************************************************************
  * @file	: console.c
- * @authors	: Zack Kohlman		<kohlmanz@msoe.edu>
- *			: Jack Maki			<makij@msoe.edu>
- *			: Daniel Nimsgern	<nimsgern@msoe.edu>
- * 			:
- * @brief	:
- ******************************************************************************
- */
+ * @brief	: This file contains the implementation of the console module, which
+ *            provides a command-line interface for interacting with the network
+ *            functionality of the system. It includes functions for initializing
+ *            the console, prompting the user for commands, and executing the
+ *            corresponding actions based on the user's input.
+ * @details	: The console module allows the user to transmit and receive messages,
+ *            set the sender and receiver addresses, and perform other network-related
+ *            operations. It also provides a help command to display a list of available
+ *            commands and their descriptions.
+ ******************************************************************************/
 
 /*
  ******************************************************************************
@@ -64,8 +67,20 @@ void console_init(void)
 }
 
 /**
- * @brief
+ * @brief Displays a user prompt and executes commands based on user input.
  *
+ * This function prompts the user with "net> " and waits for user input. It then parses the input
+ * and executes the corresponding command. The supported commands are:
+ * - "tx [string]": Transmits the provided string to the specified recipient.
+ * - "btx [string]": Broadcasts the provided string to all recipients.
+ * - "rx": Prints the latest received message to the console.
+ * - "usr [username]": Sets the sender's address to the specified username.
+ * - "recip [username]": Sets the recipient's address to the specified username.
+ * - "r": Enters RECEIVER TEST MODE, continuously printing received messages to the console.
+ * - "h": Displays a help message with a list of available commands.
+ *
+ * @note This function assumes that the necessary variables and functions are defined and implemented
+ *       elsewhere in the code.
  */
 void user_prompt(void)
 {
