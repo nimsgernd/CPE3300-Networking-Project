@@ -105,7 +105,7 @@ void user_prompt(void)
 			{
 				if(get_reciever())
 				{
-					// TODO need to use packet for next milestone
+					// populate transmission packet
 					packet tpacket;
 					tpacket.PREAMBLE = 0x55;
 					tpacket.SRC = get_sender();
@@ -115,8 +115,8 @@ void user_prompt(void)
 					tpacket.MSG = token2;
 					tpacket.TRAILER = 0xAA;
 
-					encode(token2);
-					//encode(tpacket);
+					// encode packet and transmit
+					encode(tpacket);
 					printf("transmitting '%s'...\n\r",token2);
 				}
 				else
