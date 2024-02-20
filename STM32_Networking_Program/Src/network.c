@@ -107,7 +107,7 @@ static uint8_t crc_table[256];
 
 static void transmit(void);
 static void assert_equal(char* actual, char* expected);
-static int bitArrayToInt(int *bitArray, int length);
+static uint8_t bitArrayToInt(uint8_t *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
 static uint8_t crc(char* array, int byte_len);
 
@@ -368,7 +368,7 @@ void encode(char* msg)
 /**
  * @brief	Takes in a bit array and converts it to a single int.
  */
-static int bitArrayToInt(int *bitArray, int length) {
+static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
     int result = 0;
 
     for (int i = 0; i < length; i++) {
@@ -398,7 +398,7 @@ void decode(void)
     int len = data_size / 8;
 
     // Temp array to hold only ascii values
-    int* temp_ascii = (int*)calloc(CHAR_BIT,sizeof(int));
+    uint8_t* temp_ascii = (uint8_t*)calloc(CHAR_BIT,sizeof(uint8_t));
 
     // Iterate over all characters
     for(int i = 0; i < len; i++)
@@ -420,7 +420,7 @@ void decode(void)
 
     	}
 
-    	int char_ascii = bitArrayToInt(temp_ascii, CHAR_BIT);
+    	uint8_t char_ascii = bitArrayToInt(temp_ascii, CHAR_BIT);
     	rx_decoded[i] = (char)char_ascii;
     }
 
