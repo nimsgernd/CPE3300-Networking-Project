@@ -89,7 +89,7 @@ static int curr_edge = 1;
 static int is_recieving = 0;
 
 // Bit Reception Buffer
-static int* rx_data;
+static volatile int rx_data[RXDATA_INITSIZE_BITS];
 static char* rx_decoded;
 static unsigned int array_size = RXDATA_INITSIZE_BYTES; // # of bytes to allocate
 static int data_size = 0;		// Len of recieved data
@@ -207,7 +207,7 @@ void monitor_init(void)
 void rx_init(void)
 {
 	//initialize 40 Bytes to store received transmissions. calloc(n_items, item_size);
-    rx_data = calloc(array_size, sizeof(int));
+//    rx_data = calloc(array_size, sizeof(int));
     data_size = 0;	// array begins empty
 }
 
@@ -218,7 +218,7 @@ void rx_init(void)
 void embiggen(void)
 {
 	array_size += RXDATA_INITSIZE_BYTES;
-	rx_data = realloc(rx_data, array_size*sizeof(int));
+//	rx_data = realloc(rx_data, array_size*sizeof(int));
 }
 
 /**
@@ -228,7 +228,7 @@ void embiggen(void)
  */
 void clear(void)
 {
-	free(rx_data);
+//	free(rx_data);
 	free(rx_decoded);
 }
 
@@ -487,7 +487,7 @@ void reset_rx_data(void)
 	array_size = RXDATA_INITSIZE_BITS;
 
 	// Reallocate array to init amount of bytes i.e. 40
-	rx_data = (int*)realloc(rx_data, RXDATA_INITSIZE_BYTES*sizeof(int));
+//	rx_data = (int*)realloc(rx_data, RXDATA_INITSIZE_BYTES*sizeof(int));
 }
 
 /**
