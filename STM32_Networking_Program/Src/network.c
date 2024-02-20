@@ -1,12 +1,17 @@
 /**
  ******************************************************************************
  * @file	: network.c
- * @authors	: Zack Kohlman		<kohlmanz@msoe.edu>
- *			: Jack Maki			<makij@msoe.edu>
- *			: Daniel Nimsgern	<nimsgern@msoe.edu>
- * 			:
  * @brief	: Functions for interfacing with a manchester encoded computer
- * 			: network.
+ *          network.
+ * @details : This file contains the implementation of functions for interfacing
+ *            with a Manchester encoded computer network. It includes functions
+ *            for initializing the network, transmitting and receiving data,
+ *            encoding and decoding data, and managing the network state.
+ *            The network uses GPIO pins for communication and implements
+ *            Manchester encoding for data transmission.
+ * @authors	: Zack Kohlman		<kohlmanz@msoe.edu>
+ *          : Jack Maki			<makij@msoe.edu>
+ *          : Daniel Nimsgern	<nimsgern@msoe.edu>
  ******************************************************************************
  */
 
@@ -116,8 +121,17 @@ static uint8_t crc(char* array, int byte_len);
  */
 
 /**
- * @brief	Initializes the monitoring program.
+ * @brief Initializes the monitor.
  *
+ * This function initializes the monitor by performing the following steps:
+ * - Initializes the LED bar.
+ * - Sets the data size to 0.
+ * - Populates the CRC table.
+ * - Configures RCC settings.
+ * - Configures interrupt settings.
+ * - Configures GPIO settings.
+ * - Configures timer settings.
+ * - Enables timers.
  */
 void monitor_init(void)
 {
@@ -303,12 +317,17 @@ char* get_ascii_data(void)
 }
 
 /**
- * @brief	Manchester encodes the given char* into a bit array to be parsed
- *			inside transmit function. The bit array is Manchester encoded.
- * @returns Pointer to encoded data array
+ * @brief Encodes the given message using Manchester encoding.
  *
+ * @param msg The message to be encoded.
+ *
+ * @details This function encodes the given message using Manchester encoding.
+ *          It allocates memory for the encoded data and converts each bit of
+ *          the message to a Manchester pair, where bit 0 is the bit to transmit
+ *          and bit 1 is the complement of bit 0.
+ *
+ * @note The caller is responsible for freeing the memory allocated for the encoded data.
  */
-
 void encode(char* msg)
 {
     // Make sure to have enough size for Manchester encoding i.e., 2*bits
@@ -345,7 +364,11 @@ void encode(char* msg)
 }
 
 /**
- * @brief	Takes in a bit array and converts it to a single int.
+ * Converts a bit array to an integer.
+ *
+ * @param bitArray The bit array to convert.
+ * @param length The length of the bit array.
+ * @return The converted integer.
  */
 static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
     int result = 0;
@@ -361,7 +384,14 @@ static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
 }
 
 /**
- * @brief 	Used inside the reciever to decode the manchester encoded data into ascii
+ * @brief Decodes the received data and stores it in rx_decoded.
+ *
+ * This function decodes the received data, which is encoded in a specific format,
+ * and stores the decoded data in the rx_decoded array. The decoded data is then
+ * used for further processing.
+ *
+ * @note The function assumes that the necessary memory for rx_decoded and temp_ascii
+ *       has already been allocated.
  */
 void decode(void)
 {
@@ -412,13 +442,15 @@ void decode(void)
 
 
 /**
- * @brief	Transmits the current bit pair in TIM2 CH1 ISR set at
- * 			500 uS.
+ * @brief Transmits data using Manchester encoding.
  *
+ * This function transmits Manchester 1 Pair bit to PB1. It adjusts the transmission every 500 uS.
+ * If there is data to transmit, it sets the is_transmitting flag to 1 and updates the output data register (ODR) of GPIOB.
+ * If there is no data to transmit, it sets the is_transmitting flag to 0 and updates the ODR of GPIOB to transmit a logic high.
+ * After transmitting all the bits, it resets the current_bit counter, frees the transmission_data memory, and sets it to NULL.
  */
 static void transmit(void)
 {
-	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
 	// Adjusted every 500 uS
 	if(transmission_data != NULL)
 	{
@@ -575,10 +607,14 @@ void TIM8_UP_TIM13_IRQHandler(void)
 }
 
 /**
- * @brief	Interrupt service routine to monitor the network line state using
- * 			timer 2 and tracks edges seen on the input line.
- *
+ * TIM2 IRQ handler for CC1IF and CC2IF. If the interrupt source is CC1IF, it checks if the transmitter is
+ * ready to transmit and then calls the transmit function. If the interrupt source is
+ * CC2IF, it handles the receiving of data. It checks for edge transitions and stores
+ * the received data. It also handles the state transitions from IDLE to BUSY and
+ * COLLISION to BUSY. This function clears the interrupt flags manually after handling
+ * the interrupts.
  */
+
 void TIM2_IRQHandler(void)
 {
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
@@ -623,31 +659,32 @@ void TIM2_IRQHandler(void)
 			led_enable(BUSY_LED_STATE); // Enables second to left LED
 
 
-			// 1 to zero transition (idles high). Discard first edge.
+			// Check for falling edge
 			if(prev_edge && !curr_edge)
 			{
 				is_recieving = 1;
 			}
 		}
 
-		//Receiver
-		/**
-		 * NOTE: tim14 is also used as rx timer
-		 *  a high-to-low transition in the middle of the bit period.
-		 *  Thus, while in IDLE, the first edge that the receiver will see will be
-		 *  the transition in the middle of the bit period, thus, the second bit period
-		 *  starts 500 μs after the first falling edge in the transmission.
-		 *  If you are not yet supporting a header, ensure any data you receive
-		 *  also starts with a logic-0 to ensure consistent timing.
-		 */
+		 /**
+		  * The code snippet is a part of the network functionality implementation.
+		  * It handles the reception of data and stores it in the `rx_data` array.
+		  * The received data is checked against a threshold to determine if it should be ignored or stored.
+		  * The interrupt flag on channel 2 is cleared manually.
+		  */
+		// If we're recieving
 		if(is_recieving)
 		{
+			uint16_t delta_t;
+
+			// For first edge, include preceeding 0
 			if(curr_edge == prev_edge)
 			{
 				rx_data[0] = '0';
 				data_size++;
 			}
-			uint16_t delta_t;
+
+			// Calculate time difference
 			if (tim14_current_count >= tim14_previous_count)
 			{
 				delta_t = tim14_current_count - tim14_previous_count;
