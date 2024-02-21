@@ -81,7 +81,7 @@ static Delay tx_delay = NO;	// Collision to Busy delay flag
 static volatile char was_edge = 0;
 
 // Manchester Encoded Transmission Data
-static int* transmission_data = NULL;
+static uint8_t* transmission_data = NULL;
 static int transmission_len = 0;
 
 // Bit tracker for transmit function
@@ -97,8 +97,7 @@ static int is_recieving = 0;
 static char msg[MAX_MSG_LEN_BYTES];	//256 supported
 
 // Bit Reception Buffer
-static int rx_data[RXDATA_INITSIZE_BITS];
-static uint8_t rx_data_copy[RXDATA_INITSIZE_BITS];
+static uint8_t rx_data[RXDATA_INITSIZE_BITS];
 
 static char* rx_decoded;
 static int data_size = 0;		// Len of recieved data
@@ -115,10 +114,10 @@ static uint8_t crc_table[256];
  */
 
 static void transmit(void);
-static int bitArrayToInt(int *bitArray, int length);
+static uint8_t bitArrayToInt(uint8_t *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
 static uint8_t crc(char* array, int byte_len);
-static void parse_packet(void);
+static void extract_msg(void);
 
 
 /*
@@ -320,7 +319,7 @@ int* get_raw_data(void)
 char* get_ascii_data(void)
 {
 	new_message = 0;
-	return rx_decoded;
+	return reception.MSG;
 }
 
 /**
@@ -338,7 +337,7 @@ char* get_ascii_data(void)
 void encode(char* msg)
 {
     // Make sure to have enough size for Manchester encoding i.e., 2*bits
-    transmission_data = (int*)malloc(2 * strlen(msg) * BYTE * sizeof(int));
+    transmission_data = (uint8_t*)malloc(2 * strlen(msg) * BYTE * sizeof(uint8_t));
     transmission_len = 2 * strlen(msg) * BYTE;
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
@@ -377,7 +376,7 @@ void encode(char* msg)
  * @param length The length of the bit array.
  * @return The converted integer.
  */
-static int bitArrayToInt(int *bitArray, int length) {
+static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
     int result = 0;
 
     for (int i = 0; i < length; i++) {
@@ -398,43 +397,42 @@ static int bitArrayToInt(int *bitArray, int length) {
  * 0-255 byets/char message
  * 8 bit trailer
  */
-static void parse_packet(void)
+void parse_packet(void)
 {
     // Ensure that there is enough data for a complete packet
-    if (data_size < 6 * BYTE)
+    if (data_size < MIN_PACKET_LEN_BYTES)
     {  	// Each field is 8 bits
         // Not enough data for a complete packet
         return;
-    }
-
-    for(int i = 0; i <= data_size; i++)
-    {
-    	rx_data_copy[i] = rx_data[i];
     }
 
     reception.PREAMBLE = bitArrayToInt(&rx_data[0], BYTE);
     reception.SRC = bitArrayToInt(&rx_data[BYTE], BYTE);
     reception.DEST = bitArrayToInt(&rx_data[BYTE*2], BYTE);
     reception.LEN = bitArrayToInt(&rx_data[BYTE*3], BYTE);
+    reception.CRC = bitArrayToInt(&rx_data[BYTE*4], BYTE);
 
-    // Ensure that there is enough data for the complete message
-    if (data_size < (reception.LEN + 6) * BYTE)
-    {
-        // Not enough data for the complete message
-        return;
-    }
 
     // Parse the message
-    for (int i = 0; i < reception.LEN; i++)
+    if(!reception.LEN)
     {
-        msg[i] = bitArrayToInt(&rx_data[(i + 4) * BYTE], BYTE);
+        memset(msg, '\0', sizeof(msg));
+    } else {
+    	for (int i = 0; i < reception.LEN; i++)
+		{
+			msg[i] = bitArrayToInt(&rx_data[(i + 5) * BYTE], BYTE);
+		}
     }
 
+    // Set msg in struct
+    strcpy(reception.MSG, msg);
+
     // Parse the trailer
-    reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 4) * BYTE], BYTE);
+    reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 5) * BYTE], BYTE);
 
 
-
+    // new message
+    new_message = 1;
 }
 
 
@@ -443,20 +441,20 @@ void test_parse_packet(void)
 {
     // Test 1: Test with a valid packet
     {
-    	int8_t arr[] = {0xAA, 0x01, 0x02, 0x03, 'H', 'e', 'l', 'l', 'o', 0xBB};
+    	int8_t arr[] = {0xAA, 0x01, 0x02, 0x05, 0x01,'H', 'e', 'l', 'l', 'o', 0xBB};
         int rx_data_index = 0;
 
         for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i) {
             uint8_t current_char = arr[i];
 
             // Extract each bit of the current character and store it in rx_data
-            for (int j = 0; j < 8; ++j) {
+            for (int j = BYTE - 1; j >= 0; --j) {
                 rx_data[rx_data_index] = (current_char >> j) & 0x01;
                 ++rx_data_index;
             }
         }
 
-        data_size = 80;
+        data_size = sizeof(arr)*BYTE;
 
 
     	// Now bit_array contains the binary representation of rx_data
@@ -467,7 +465,8 @@ void test_parse_packet(void)
         assert(reception.PREAMBLE == 0xAA);
         assert(reception.SRC == 0x01);
         assert(reception.DEST == 0x02);
-        assert(reception.LEN == 0x03);
+        assert(reception.LEN == 0x05);
+        assert(reception.CRC == 0x01);
         assert(strcmp(reception.MSG, "Hello") == 0);
         assert(reception.TRAILER == 0xBB);
     }
@@ -475,8 +474,20 @@ void test_parse_packet(void)
     // Test 2: Test with an invalid packet (not enough data for a complete packet)
     {
         // Set up the raw data for an invalid packet
-        uint8_t rx_data[] = {0xAA, 0x01, 0x02};
-        int data_size = sizeof(rx_data);
+    	int8_t arr[] = {0xAA, 0x01, 0x02, 0x05, 0xBB};
+        int rx_data_index = 0;
+
+        for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i) {
+            uint8_t current_char = arr[i];
+
+            // Extract each bit of the current character and store it in rx_data
+            for (int j = BYTE - 1; j >= 0; --j) {
+                rx_data[rx_data_index] = (current_char >> j) & 0x01;
+                ++rx_data_index;
+            }
+        }
+
+        data_size = 5*BYTE;
 
         // Call the function to test
         parse_packet();
@@ -485,9 +496,40 @@ void test_parse_packet(void)
         assert(reception.PREAMBLE == 0xAA);
         assert(reception.SRC == 0x01);
         assert(reception.DEST == 0x02);
-        assert(reception.LEN == 0x03);
+        assert(reception.LEN == 0x05);
         assert(strcmp(reception.MSG, "Hello") == 0);
         assert(reception.TRAILER == 0xBB);
+    }
+    {
+		// Test 3: With no message
+
+		// Set up the raw data for an invalid packet
+    	int8_t arr[] = {0xAA, 0x01, 0x02, 0x00, 0x01, 0xBB};
+		int rx_data_index = 0;
+
+		for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i) {
+			uint8_t current_char = arr[i];
+
+			// Extract each bit of the current character and store it in rx_data
+			for (int j = BYTE - 1; j >= 0; --j) {
+				rx_data[rx_data_index] = (current_char >> j) & 0x01;
+				++rx_data_index;
+			}
+		}
+
+		data_size = sizeof(arr)*BYTE;
+
+		// Call the function to test
+		parse_packet();
+
+		// Check the results (the function should return without modifying new_packet)
+		assert(reception.PREAMBLE == 0xAA);
+		assert(reception.SRC == 0x01);
+		assert(reception.DEST == 0x02);
+		assert(reception.LEN == 0x00);
+		assert(reception.CRC == 0x01);
+		assert(strcmp(reception.MSG, NULL) == NULL);
+		assert(reception.TRAILER == 0xBB);
     }
 }
 
@@ -502,9 +544,9 @@ void test_parse_packet(void)
  * @note The function assumes that the necessary memory for rx_decoded and temp_ascii
  *       has already been allocated.
  */
-void extract_msg(void)
+static void extract_msg(void)
 {
-//	parse_packet();
+	parse_packet();
 
     rx_decoded = (char*)calloc(((data_size / BYTE) + 1),sizeof(char));
 
@@ -518,7 +560,7 @@ void extract_msg(void)
     int len = data_size / 8;
 
     // Temp array to hold only ascii values
-    int* temp_ascii = (int*)calloc(BYTE,sizeof(int));
+    uint8_t* temp_ascii = (uint8_t*)calloc(BYTE,sizeof(uint8_t));
 
     // Iterate over all characters
     for(int i = 0; i < len; i++)
@@ -540,7 +582,7 @@ void extract_msg(void)
 
     	}
 
-    	int char_ascii = bitArrayToInt(temp_ascii, BYTE);
+    	uint8_t char_ascii = bitArrayToInt(temp_ascii, BYTE);
     	rx_decoded[i] = (char)char_ascii;
     }
 
