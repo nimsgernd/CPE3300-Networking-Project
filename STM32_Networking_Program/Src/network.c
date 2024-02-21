@@ -58,7 +58,7 @@
 #define MAX_16 0xFFFF
 #define HALF_BIT_PERIOD_500_US 500e-6
 #define CLOCK_CYCLES_500_US (int)((F_CPU * HALF_BIT_PERIOD_500_US)-1)
-#define CHAR_BIT 8
+
 
 // Addresses
 static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
@@ -81,7 +81,7 @@ static Delay tx_delay = NO;	// Collision to Busy delay flag
 static volatile char was_edge = 0;
 
 // Manchester Encoded Transmission Data
-static int* transmission_data = NULL;
+static uint8_t* transmission_data = NULL;
 static int transmission_len = 0;
 
 // Bit tracker for transmit function
@@ -93,8 +93,12 @@ static int prev_edge = 1;	// 0 = previous edge was logic 0, 1 = previous edge wa
 static int curr_edge = 1;
 static int is_recieving = 0;
 
+// Parse packet vars
+static char msg[MAX_MSG_LEN_BYTES];	//256 supported
+
 // Bit Reception Buffer
-static volatile int rx_data[RXDATA_INITSIZE_BITS];
+static uint8_t rx_data[RXDATA_INITSIZE_BITS];
+
 static char* rx_decoded;
 static int data_size = 0;		// Len of recieved data
 static uint16_t tim14_current_count = 0;
@@ -113,6 +117,8 @@ static void transmit(void);
 static uint8_t bitArrayToInt(uint8_t *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
 static uint8_t crc(char* array, int byte_len);
+static void extract_msg(void);
+
 
 /*
  ******************************************************************************
@@ -313,7 +319,7 @@ int* get_raw_data(void)
 char* get_ascii_data(void)
 {
 	new_message = 0;
-	return rx_decoded;
+	return reception.MSG;
 }
 
 /**
@@ -330,26 +336,27 @@ char* get_ascii_data(void)
  */
 void encode(packet tpacket)
 {
+
     // Make sure to have enough size in the msg buffer for the original message + packet data
-	char* msg = (char*)malloc(strlen(msg) * CHAR_BIT * sizeof(int) + 6*sizeof(uint16_t));
+	char* msg = (char*)malloc(strlen(msg) * BYTE * sizeof(int) + 6*sizeof(uint16_t));
 	snprintf(msg, 303, "%x%x%x%x%x%s%x", tpacket.PREAMBLE, tpacket.SRC, tpacket.DEST,
 			tpacket.LEN, tpacket.CRC, tpacket.MSG, tpacket.TRAILER);
 	//debug
 	printf("packet string: %s\n",msg);
 
 	// Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
-    transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
-    transmission_len = 2 * strlen(msg) * CHAR_BIT;
+    transmission_data = (uint8_t*)malloc(2 * strlen(msg) * BYTE * sizeof(uint8_t));
+    transmission_len = 2 * strlen(msg) * BYTE;
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
     int len = strlen(msg);
     for(int i = 0; i < len; i++)
     {
-        for(int j = CHAR_BIT - 1; j >= 0; j--)
+        for(int j = BYTE - 1; j >= 0; j--)
         { // Start from the most significant bit
             int bit = (msg[i] >> j) & 1;
-            transmission_data[2*((i+1)*CHAR_BIT - j - 1)] = bit ^ 1; // Use XOR to flip the bit
-            transmission_data[2*((i+1)*CHAR_BIT - j - 1) + 1] = bit;
+            transmission_data[2*((i+1)*BYTE - j - 1)] = bit ^ 1; // Use XOR to flip the bit
+            transmission_data[2*((i+1)*BYTE - j - 1) + 1] = bit;
         }
     }
 
@@ -389,7 +396,152 @@ static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
 
     return result;
 }
+/**
+ * Takes the raw data and creates a struct with
+ * 8 bit preamble
+ * 8 bit source address
+ * 8 bit destination address
+ * 8 bit length of the message (0-255 of charcters/bytes)
+ * 0-255 byets/char message
+ * 8 bit trailer
+ */
+void parse_packet(void)
+{
+    // Ensure that there is enough data for a complete packet
+    if (data_size < MIN_PACKET_LEN_BYTES)
+    {  	// Each field is 8 bits
+        // Not enough data for a complete packet
+        return;
+    }
 
+    reception.PREAMBLE = bitArrayToInt(&rx_data[0], BYTE);
+    reception.SRC = bitArrayToInt(&rx_data[BYTE], BYTE);
+    reception.DEST = bitArrayToInt(&rx_data[BYTE*2], BYTE);
+    reception.LEN = bitArrayToInt(&rx_data[BYTE*3], BYTE);
+    reception.CRC = bitArrayToInt(&rx_data[BYTE*4], BYTE);
+
+
+    // Parse the message
+    if(!reception.LEN)
+    {
+        memset(msg, '\0', sizeof(msg));
+    } else {
+    	for (int i = 0; i < reception.LEN; i++)
+		{
+			msg[i] = bitArrayToInt(&rx_data[(i + 5) * BYTE], BYTE);
+		}
+    }
+
+    // Set msg in struct
+    strcpy(reception.MSG, msg);
+
+    // Parse the trailer
+    reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 5) * BYTE], BYTE);
+
+
+    // new message
+    new_message = 1;
+}
+
+
+
+void test_parse_packet(void)
+{
+    // Test 1: Test with a valid packet
+    {
+    	int8_t arr[] = {0xAA, 0x01, 0x02, 0x05, 0x01,'H', 'e', 'l', 'l', 'o', 0xBB};
+        int rx_data_index = 0;
+
+        for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i) {
+            uint8_t current_char = arr[i];
+
+            // Extract each bit of the current character and store it in rx_data
+            for (int j = BYTE - 1; j >= 0; --j) {
+                rx_data[rx_data_index] = (current_char >> j) & 0x01;
+                ++rx_data_index;
+            }
+        }
+
+        data_size = sizeof(arr)*BYTE;
+
+
+    	// Now bit_array contains the binary representation of rx_data
+        // Call the function to test
+        parse_packet();
+
+        // Check the results
+        assert(reception.PREAMBLE == 0xAA);
+        assert(reception.SRC == 0x01);
+        assert(reception.DEST == 0x02);
+        assert(reception.LEN == 0x05);
+        assert(reception.CRC == 0x01);
+        assert(strcmp(reception.MSG, "Hello") == 0);
+        assert(reception.TRAILER == 0xBB);
+    }
+
+    // Test 2: Test with an invalid packet (not enough data for a complete packet)
+    {
+        // Set up the raw data for an invalid packet
+    	int8_t arr[] = {0xAA, 0x01, 0x02, 0x05, 0xBB};
+        int rx_data_index = 0;
+
+        for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i) {
+            uint8_t current_char = arr[i];
+
+            // Extract each bit of the current character and store it in rx_data
+            for (int j = BYTE - 1; j >= 0; --j) {
+                rx_data[rx_data_index] = (current_char >> j) & 0x01;
+                ++rx_data_index;
+            }
+        }
+
+        data_size = 5*BYTE;
+
+        // Call the function to test
+        parse_packet();
+
+        // Check the results (the function should return without modifying new_packet)
+        assert(reception.PREAMBLE == 0xAA);
+        assert(reception.SRC == 0x01);
+        assert(reception.DEST == 0x02);
+        assert(reception.LEN == 0x05);
+        assert(strcmp(reception.MSG, "Hello") == 0);
+        assert(reception.TRAILER == 0xBB);
+    }
+    {
+		// Test 3: With no message
+
+		// Set up the raw data for an invalid packet
+    	int8_t arr[] = {0xAA, 0x01, 0x02, 0x00, 0x01, 0xBB};
+		int rx_data_index = 0;
+
+		for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i) {
+			uint8_t current_char = arr[i];
+
+			// Extract each bit of the current character and store it in rx_data
+			for (int j = BYTE - 1; j >= 0; --j) {
+				rx_data[rx_data_index] = (current_char >> j) & 0x01;
+				++rx_data_index;
+			}
+		}
+
+		data_size = sizeof(arr)*BYTE;
+
+		// Call the function to test
+		parse_packet();
+
+		// Check the results (the function should return without modifying new_packet)
+		assert(reception.PREAMBLE == 0xAA);
+		assert(reception.SRC == 0x01);
+		assert(reception.DEST == 0x02);
+		assert(reception.LEN == 0x00);
+		assert(reception.CRC == 0x01);
+		assert(strcmp(reception.MSG, NULL) == NULL);
+		assert(reception.TRAILER == 0xBB);
+    }
+}
+
+    // TODO: Add more tests as needed
 /**
  * @brief Decodes the received data and stores it in rx_decoded.
  *
@@ -400,9 +552,11 @@ static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
  * @note The function assumes that the necessary memory for rx_decoded and temp_ascii
  *       has already been allocated.
  */
-void decode(void)
+static void extract_msg(void)
 {
-    rx_decoded = (char*)calloc(((data_size / CHAR_BIT*2) + 1),sizeof(char));
+	parse_packet();
+
+    rx_decoded = (char*)calloc(((data_size / BYTE) + 1),sizeof(char));
 
     if (rx_decoded == NULL)
     {
@@ -414,7 +568,7 @@ void decode(void)
     int len = data_size / 8;
 
     // Temp array to hold only ascii values
-    uint8_t* temp_ascii = (uint8_t*)calloc(CHAR_BIT,sizeof(uint8_t));
+    uint8_t* temp_ascii = (uint8_t*)calloc(BYTE,sizeof(uint8_t));
 
     // Iterate over all characters
     for(int i = 0; i < len; i++)
@@ -422,12 +576,12 @@ void decode(void)
 		int ascii_index = 0;
 
     	// For each of the 16 bits that reps 1 byte
-    	for(int j = 0; j < CHAR_BIT; j++)
+    	for(int j = 0; j < BYTE; j++)
     	{
         // The first bit of the pair should be the inverse of the second bit
         // If this is not the case, there may be an error in the encoded data
 
-    		int rx_index = j + (i*(CHAR_BIT));
+    		int rx_index = j + (i*(BYTE));
 
     		int ascii_bit = rx_data[rx_index];
     		temp_ascii[ascii_index] = ascii_bit;
@@ -436,7 +590,7 @@ void decode(void)
 
     	}
 
-    	uint8_t char_ascii = bitArrayToInt(temp_ascii, CHAR_BIT);
+    	uint8_t char_ascii = bitArrayToInt(temp_ascii, BYTE);
     	rx_decoded[i] = (char)char_ascii;
     }
 
@@ -446,7 +600,16 @@ void decode(void)
 
 }
 
-
+void print_packet(void)
+{
+	printf("Preamble: %X\n\r", reception.PREAMBLE);
+	printf("SRC: %X\n\r", reception.SRC);
+	printf("DEST: %X\n\r", reception.DEST);
+	printf("LEN: %X\n\r", reception.LEN);
+	printf("CRC: %X\n\r", reception.CRC);
+	printf("MSG: %s\n\r", reception.MSG);
+	printf("TRAILER: %X\n\r", reception.TRAILER);
+}
 
 /**
  * @brief Transmits data using Manchester encoding.
@@ -457,12 +620,7 @@ void decode(void)
  * After transmitting all the bits, it resets the current_bit counter, frees the transmission_data memory, and sets it to NULL.
  */
 static void transmit(void)
-<<<<<<< HEAD
-{	
-	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
-=======
 {
->>>>>>> e664e6a67283b565b23e122a09929abb7f756be3
 	// Adjusted every 500 uS
 	if(transmission_data != NULL)
 	{
@@ -685,16 +843,16 @@ void TIM2_IRQHandler(void)
 		  * The interrupt flag on channel 2 is cleared manually.
 		  */
 		// If we're recieving
+		// For first edge, include preceeding 0
+		if(curr_edge == prev_edge)
+		{
+			rx_data[0] = '0';
+			data_size++;
+		}
+
 		if(is_recieving)
 		{
 			uint16_t delta_t;
-
-			// For first edge, include preceeding 0
-			if(curr_edge == prev_edge)
-			{
-				rx_data[0] = '0';
-				data_size++;
-			}
 
 			// Calculate time difference
 			if (tim14_current_count >= tim14_previous_count)

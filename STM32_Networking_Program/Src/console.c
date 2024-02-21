@@ -38,6 +38,7 @@
 static char str[258];
 static char * token1;
 static char * token2;
+static packet tpacket;
 
 /*
  ******************************************************************************
@@ -112,7 +113,7 @@ void user_prompt(void)
 					tpacket.DEST = get_reciever();
 					tpacket.LEN = (uint8_t)strlen(token2); 
 					tpacket.CRC = 0;
-					tpacket.MSG = token2;
+					strcpy(tpacket.MSG, token2);
 					tpacket.TRAILER = 0xAA;
 
 					// encode packet and transmit
@@ -140,7 +141,18 @@ void user_prompt(void)
 		{
 			int temp = get_reciever();
 			set_reciever(0xFF);
-			encode(token2); // TODO need to add packet for next milestone
+			//TEMPORARY IMPLEMENTATION
+			//final product will utilize the transmission packet in network.c
+			packet tpacket;
+			tpacket.PREAMBLE = 0x55;
+			tpacket.SRC = get_sender();
+			tpacket.DEST = get_reciever();
+			tpacket.LEN = (uint8_t)strlen(token2); 
+			tpacket.CRC = 0;
+			strcpy(tpacket.MSG, token2);
+			tpacket.TRAILER = 0xAA;
+			//END TEMPORARY IMPLEMENTATION
+			encode(tpacket);
 			printf("broadcasting '%s'...\n\r",token2);
 			set_reciever(temp);
 		}
@@ -152,7 +164,7 @@ void user_prompt(void)
 	else if(!strcmp(token1,"rx"))
 	{
 		// Get Ascii Data
-		decode();
+		parse_packet();
 
 		// Checks for a recieved message, prints it to console, then returns to command prompt
 		if(new_message_flag())
