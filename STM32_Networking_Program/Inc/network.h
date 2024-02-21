@@ -94,7 +94,7 @@ int get_reciever(void);
 extern int* get_raw_data(void);
 extern char* get_ascii_data(void);
 extern int get_dataSize(void);
-extern void encode(char* msg);
+void encode(packet tpacket);
 extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);
 extern void TIM2_IRQHandler(void);
