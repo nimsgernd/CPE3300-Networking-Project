@@ -334,11 +334,24 @@ char* get_ascii_data(void)
  *
  * @note The caller is responsible for freeing the memory allocated for the encoded data.
  */
-void encode(char* msg)
+void encode(packet tpacket)
 {
+<<<<<<< HEAD
     // Make sure to have enough size for Manchester encoding i.e., 2*bits
     transmission_data = (uint8_t*)malloc(2 * strlen(msg) * BYTE * sizeof(uint8_t));
     transmission_len = 2 * strlen(msg) * BYTE;
+=======
+    // Make sure to have enough size in the msg buffer for the original message + packet data
+	char* msg = (char*)malloc(strlen(msg) * CHAR_BIT * sizeof(int) + 6*sizeof(uint16_t));
+	snprintf(msg, 303, "%x%x%x%x%x%s%x", tpacket.PREAMBLE, tpacket.SRC, tpacket.DEST,
+			tpacket.LEN, tpacket.CRC, tpacket.MSG, tpacket.TRAILER);
+	//debug
+	printf("packet string: %s\n",msg);
+
+	// Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
+    transmission_data = (int*)malloc(2 * strlen(msg) * CHAR_BIT * sizeof(int));
+    transmission_len = 2 * strlen(msg) * CHAR_BIT;
+>>>>>>> d60b16449238a0c1ea8afa7755b03044298c1c42
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
     int len = strlen(msg);
@@ -612,7 +625,12 @@ void print_packet(void)
  * After transmitting all the bits, it resets the current_bit counter, frees the transmission_data memory, and sets it to NULL.
  */
 static void transmit(void)
+<<<<<<< HEAD
+{	
+	// Transmit Manchester 1 Pair bit to PB1 i.e. 1 -> 01 -> 1 THEN 0
+=======
 {
+>>>>>>> e664e6a67283b565b23e122a09929abb7f756be3
 	// Adjusted every 500 uS
 	if(transmission_data != NULL)
 	{
