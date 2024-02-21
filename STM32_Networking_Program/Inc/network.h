@@ -16,11 +16,11 @@
  * Values
  ******************************************************************************
  */
-
+#define BYTE 8
 #define RT_MAX_VALUE 			0x7F7F7F
 #define TX_DELAY_SCALAR			((double)16000/(double)65535)
 #define RXDATA_INITSIZE_BYTES 	261
-#define RXDATA_INITSIZE_BITS 	(CHAR_BIT * RXDATA_INITSIZE_BYTES) // 40 Bytes
+#define RXDATA_INITSIZE_BITS 	(BYTE * RXDATA_INITSIZE_BYTES) // 40 Bytes
 #define BYTE_LEN 				8 	// 1 Byte = 8 bits
 #define MAX_MSG_LEN_BYTES 		255 // Msg section in data link layer supports up to 255 bytes
 #define MAX_MSG_LEN_BITS 		MAX_MSG_LEN_BYTES * BYTE_LEN // 255 bytes in bits
@@ -73,7 +73,7 @@ typedef struct
 	uint8_t DEST;
 	uint8_t LEN;
 	uint8_t CRC;
-	char* MSG;
+	char MSG[MAX_MSG_LEN_BYTES];
 	uint8_t TRAILER;
 
 }packet;
@@ -97,6 +97,8 @@ extern void encode(char* msg);
 extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);
 extern void TIM2_IRQHandler(void);
-extern void decode(void);
+extern void extract_msg(void);
 extern void reset_rx_data(void);
+extern void print_packet(void);
+extern void test_parse_packet(void);
 #endif
