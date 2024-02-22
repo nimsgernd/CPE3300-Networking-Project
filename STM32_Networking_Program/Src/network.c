@@ -58,7 +58,7 @@
 #define MAX_16 0xFFFF
 #define HALF_BIT_PERIOD_500_US 500e-6
 #define CLOCK_CYCLES_500_US (int)((F_CPU * HALF_BIT_PERIOD_500_US)-1)
-
+#define CHAR_BIT 8
 
 // Addresses
 static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
