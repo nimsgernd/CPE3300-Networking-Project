@@ -68,7 +68,7 @@ static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
 static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
 
-// TODO: Implement packet struct
+
 static packet transmission = {0x55,0x00,0x00,0x00,0x00,NULL,0xAA};
 static packet reception;
 
@@ -364,14 +364,27 @@ char* get_ascii_data(void)
  */
 void encode(char* msg)
 {
+	int msg_len = strlen(msg);
+
+	// SRC, RECIEVER, and CRC already set... need to set others in transmission struct
+	transmission.PREAMBLE = 0x55;
+	transmission.LEN = msg_len;
+
+	if(!get_crc())
+	{
+		transmission.TRAILER = 0xAA;
+	} else {
+		transmission.CRC = crc(msg, msg_len);
+	}
+	strcpy(transmission.MSG, msg);
+
 
 	// Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
-    transmission_data = (uint8_t*)malloc(2 * strlen(msg) * BYTE * sizeof(uint8_t));
-    transmission_len = 2 * strlen(msg) * BYTE;
+    transmission_len = 2 * (msg_len * BYTE * (BYTE * NUM_8BIT_FIELDS));
+    transmission_data = (uint8_t*)malloc(transmission_len* sizeof(uint8_t));
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
-    int len = strlen(msg);
-    for(int i = 0; i < len; i++)
+    for(int i = 0; i < msg_len; i++)
     {
         for(int j = BYTE - 1; j >= 0; j--)
         { // Start from the most significant bit
@@ -380,6 +393,8 @@ void encode(char* msg)
             transmission_data[2*((i+1)*BYTE - j - 1) + 1] = bit;
         }
     }
+
+
 
 // Uncomment below to check transmission_data
 //    printf("\n");

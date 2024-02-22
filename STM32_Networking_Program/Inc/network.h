@@ -25,7 +25,8 @@
 #define MAX_MSG_LEN_BYTES 		255 // Msg section in data link layer supports up to 255 bytes
 #define MAX_MSG_LEN_BITS 		MAX_MSG_LEN_BYTES * BYTE_LEN // 255 bytes in bits
 #define PACKET_LEN				7
-#define MIN_PACKET_LEN_BYTES	((BYTE)*(PACKET_LEN-1))
+#define NUM_8BIT_FIELDS			(PACKET_LEN-1)
+#define MIN_PACKET_LEN_BYTES	((BYTE)*(NUM_8BIT_FIELDS))
 #define DECIMAL					10
 #define BYTE 8
 
@@ -104,6 +105,6 @@ extern int get_sender_addr(void);
 extern void post_collision_delay(void);
 extern void TIM8_UP_TIM13_IRQHandler(void);
 extern void TIM2_IRQHandler(void);
-extern void decode(void);
+extern void parse_packet(void);
 extern void reset_rx_data(void);
 #endif
