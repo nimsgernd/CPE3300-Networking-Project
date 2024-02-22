@@ -38,7 +38,6 @@
 static char str[258];
 static char * token1;
 static char * token2;
-static packet tpacket;
 
 /*
  ******************************************************************************
@@ -106,18 +105,8 @@ void user_prompt(void)
 			{
 				if(get_reciever())
 				{
-					// populate transmission packet
-					packet tpacket;
-					tpacket.PREAMBLE = 0x55;
-					tpacket.SRC = get_sender();
-					tpacket.DEST = get_reciever();
-					tpacket.LEN = (uint8_t)strlen(token2); 
-					tpacket.CRC = 0;
-					strcpy(tpacket.MSG, token2);
-					tpacket.TRAILER = 0xAA;
-
 					// encode packet and transmit
-					encode(tpacket);
+					encode(token2);
 					printf("transmitting '%s'...\n\r",token2);
 				}
 				else
@@ -141,18 +130,7 @@ void user_prompt(void)
 		{
 			int temp = get_reciever();
 			set_reciever(0xFF);
-			//TEMPORARY IMPLEMENTATION
-			//final product will utilize the transmission packet in network.c
-			packet tpacket;
-			tpacket.PREAMBLE = 0x55;
-			tpacket.SRC = get_sender();
-			tpacket.DEST = get_reciever();
-			tpacket.LEN = (uint8_t)strlen(token2); 
-			tpacket.CRC = 0;
-			strcpy(tpacket.MSG, token2);
-			tpacket.TRAILER = 0xAA;
-			//END TEMPORARY IMPLEMENTATION
-			encode(tpacket);
+			encode(token2);
 			printf("broadcasting '%s'...\n\r",token2);
 			set_reciever(temp);
 		}
@@ -166,7 +144,7 @@ void user_prompt(void)
 		// Get Ascii Data
 		parse_packet();
 
-		// Checks for a recieved message, prints it to console, then returns to command prompt
+		// Checks for a received message, prints it to console, then returns to command prompt
 		if(new_message_flag())
 		{
 
@@ -224,22 +202,40 @@ void user_prompt(void)
 			{
 				printf("%s\n\r", get_ascii_data());
 			}
-			// Give time for transmissions to complete before reading them
-			delay_s(1);
 		}
 	}
-	else if(!strcmp(token1, "h"))
+	else if(!strcmp(token1,"crc"))
+	{
+		if(!strcasecmp(token2,"on"))
+		{
+			set_reciever(1);
+		}
+		else if(!strcasecmp(token2,"off"))
+		{
+			set_reciever(0);
+		}
+	}
+	else if(!strcmp(token1,"h"))
 	{
 		printf("=========================================================\n\r");
 		printf("tx [string]\n\r");
-		printf("	Transmits the string input by the user\n\r");
+		printf("	Transmits the string input by the user to the\n\r");
+		printf("    recipient\n\r");
 		printf("\n\r");
+		printf("btx\n\r");
+		printf("    Transmits the ");
 		printf("rx\n\r");
 		printf("	Prints the latest message to the console\n\r");
 		printf("\n\r");
 		printf("r\n\r");
 		printf("	Continuously prints messages to the console\n\r");
 		printf("	(Does not return)\n\r");
+		printf("usr\n\r");
+		printf("    Sets the address of the network interface based on\n\r");
+		printf("    the name input\n\r");
+		printf("recip\n\r");
+		printf("    Sets the message recipient based on the name input\n\r");
+		printf("\n\r");
 		printf("=========================================================\n\r");
 	}
 	else
