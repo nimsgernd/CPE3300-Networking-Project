@@ -417,6 +417,7 @@ static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
 
     return result;
 }
+
 /**
  * Takes the raw data and creates a struct with
  * 8 bit preamble
@@ -467,13 +468,20 @@ void parse_packet(void)
     new_message = 1;
 }
 
+/**
+ * @brief
+ *
+ * @return
+ */
 int is_valid_packet(void)
 {
 	return valid_packet;
 }
 
-
-
+/**
+ * @brief
+ *
+ */
 void test_parse_packet(void)
 {
     // Test 1: Test with a valid packet
@@ -570,7 +578,12 @@ void test_parse_packet(void)
     }
 }
 
-    // TODO: Add more tests as needed
+
+/**
+ * @brief
+ *
+ * TODO: Add more tests as needed
+ */
 void print_packet(void)
 {
 	printf("Preamble: %X\n\r", reception.PREAMBLE);
@@ -619,6 +632,7 @@ static void transmit(void)
 
 /**
  * @brief	frees received data and resets to defaults
+ *
  */
 void reset_rx_data(void)
 {
@@ -755,7 +769,6 @@ void TIM8_UP_TIM13_IRQHandler(void)
  * COLLISION to BUSY. This function clears the interrupt flags manually after handling
  * the interrupts.
  */
-
 void TIM2_IRQHandler(void)
 {
 	if(tim2->SR & CC1IF) // If the interrupt source is a capture event on channel 1
