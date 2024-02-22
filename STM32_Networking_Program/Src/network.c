@@ -331,7 +331,7 @@ char* get_ascii_data(void)
 void encode(packet tpacket)
 {
     // Make sure to have enough size in the msg buffer for the original message + packet data
-	char* msg = (char*)malloc(strlen(msg) * CHAR_BIT * sizeof(int) + 6*sizeof(uint16_t));
+	char* msg = (char*)malloc(strlen(tpacket.MSG) * CHAR_BIT * sizeof(int) + 6*sizeof(uint16_t));
 	snprintf(msg, 303, "%x%x%x%x%x%s%x", tpacket.PREAMBLE, tpacket.SRC, tpacket.DEST,
 			tpacket.LEN, tpacket.CRC, tpacket.MSG, tpacket.TRAILER);
 	//debug
