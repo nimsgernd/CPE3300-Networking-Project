@@ -69,7 +69,7 @@ static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
 static volatile GPTIM16B *const tim9 = (GPTIM16B *) TIM9_BASE;
 
 
-static packet transmission = {0x55,0x00,0x00,0x00,0x00,NULL,0xAA};
+static packet transmission = {0x55,0x00,0x00,0x00,0x00,{0x00},0xAA};
 static packet reception;
 
 // State
@@ -368,16 +368,19 @@ void encode(char* msg)
 
 	// SRC, RECIEVER, and CRC already set... need to set others in transmission struct
 	transmission.PREAMBLE = 0x55;
-	transmission.LEN = msg_len;
 
-	if(!get_crc())
-	{
-		transmission.TRAILER = 0xAA;
-	} else {
-		transmission.CRC = crc(msg, msg_len);
-	}
+	transmission.LEN = msg_len;
+	free(transmission.MSG);
+	transmission.MSG = malloc(msg_len * sizeof(char));
 	strcpy(transmission.MSG, msg);
 
+	if(!transmission.CRC)
+	{
+		transmission.TRAILER = 0xAA;
+	} else
+	{
+		transmission.TRAILER = crc(msg, msg_len);
+	}
 
 	// Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
     transmission_len = 2 * (msg_len * BYTE * (BYTE * NUM_8BIT_FIELDS));
