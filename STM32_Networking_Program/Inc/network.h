@@ -28,7 +28,8 @@
 #define NUM_8BIT_FIELDS			(PACKET_LEN-1)
 #define MIN_PACKET_LEN_BYTES	((BYTE)*(NUM_8BIT_FIELDS))
 #define DECIMAL					10
-#define BYTE 8
+#define BYTE 					8
+#define CRC_POLY				0x07
 
 
 /*

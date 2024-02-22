@@ -65,11 +65,11 @@ static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 static volatile STK *const stk = (STK *)STK_BASE;
 static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
-static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
+static volatile ACTIM16B *const tim1 = (ACTIM16B *)TIM1_BASE;
 static volatile GPTIM16B *const tim9 = (GPTIM16B *) TIM9_BASE;
 
 
-static packet transmission = {0x55,0x00,0x00,0x00,0x00,{0x00},0xAA};
+static packet transmission = {0x55,0x00,0x00,0x00,0x00,NULL,0xAA};
 static packet reception;
 
 // State
@@ -145,7 +145,7 @@ void monitor_init(void)
 
     data_size = 0;	// array begins empty
 
-	pop_crc_table(crc_table, 0x07);
+	pop_crc_table(crc_table, CRC_POLY);
 
 	/* RCC Settings */
 	// Enable clock for GPIOB
@@ -155,21 +155,18 @@ void monitor_init(void)
 	rcc->APB1ENR |= TIM2EN;
 
 	// Enable clock for tim8
-	rcc->APB2ENR |= TIM8EN;
+	rcc->APB2ENR |= TIM1EN;
 
 	// Enable clock for tim14
-	rcc->APB1ENR |= TIM14EN;
+	rcc->APB2ENR |= TIM9EN;
 
 	/* Interrupt Settings */
-	// Open interrupt for TIM2
-	iser[0] = TIM2_POS;
-
-	// Enable TIM8 interrupt in the NVIC
-	iser[TIM8_UP_TIM13_POS >> 5] |= (1 << (TIM8_UP_TIM13_POS % 32));
+	// Open interrupt for TIM2 and TIM1
+	iser[0] = (TIM1_UP_TIM10_IRQHandler_POS | TIM2_POS);
 
 	/* GPIO Settings */
 	// Set PA3 to alternate function for TIC/TOC
-	gpiob->MODER |= GPIO_MODER_Px3_AF | GPIO_MODER_Px1_OUT;
+	gpiob->MODER |= (GPIO_MODER_Px3_AF | GPIO_MODER_Px1_OUT);
 
 	// Set PB3 to alternate function in Alternate Function Register Low
 	gpiob->AFRL = GPIO_AFRL_Px3_AF1;
@@ -178,7 +175,7 @@ void monitor_init(void)
 	gpiob->PUPDR |= GPIO_PUPDR_Px3_UP;
 
 	// Set TX line high
-	gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
+	gpiob->ODR |= GPIO_ODR_Px1_SET;
 
 	/*Timer Settings */
 	// Set to TIC in compare compare mode register 1 in CC
@@ -202,17 +199,17 @@ void monitor_init(void)
 	tim2->ARR = CLOCK_CYCLES_500_US;
 
 	// Enable the timer interrupt
-	tim8->DIER |= UIE;
+	tim1->DIER |= UIE;
 
 	// Set the auto-reload value to achieve a period of 1.13 ms
-	tim8->ARR = THRESHOLD_TICKS-1;
+	tim1->ARR = THRESHOLD_TICKS-1;
 
 	/* Enable Timers */
 	// Enable the counter
 	tim2->CR1 |= CEN;
 
 	// Check Initial State
-	tim8->CR1 |= CEN;
+	tim1->CR1 |= CEN;
 
 	// Enable timer
 	tim9->CR1 |= CEN;
@@ -627,7 +624,7 @@ static void transmit(void)
 	if(transmission_data != NULL)
 	{
 		is_transmitting = 1;
-		gpiob->ODR = ((gpiob->ODR & GPIO_ODR_Px1) | (transmission_data[current_bit] << 1));
+		gpiob->ODR = ((gpiob->ODR & GPIO_ODR_Px1_RSET) | (transmission_data[current_bit] << 1));
 		current_bit++;
 	}
 	else
@@ -635,7 +632,7 @@ static void transmit(void)
 		// Done transmitting
 		is_transmitting = 0;
 
-		gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
+		gpiob->ODR |= GPIO_ODR_Px1_SET;
 	}
 	if(current_bit >= transmission_len)
 	{
@@ -669,7 +666,7 @@ void post_collision_delay(void)
 
 	stk->CTRL &= STK_CTRL_DIS;
 
-	stk->LOAD = (uint32_t)((double)tim9->CNT * TX_DELAY_SCALAR);
+	stk->LOAD = (uint16_t)((double)tim9->CNT * TX_DELAY_SCALAR);
 
 	stk->VAL = 0;
 
@@ -739,15 +736,15 @@ void SysTick_Handler(void)
 }
 
 /**
- * @brief	Timer 8 is a 1.13ms timeout. If an edge has not been seen since the
+ * @brief	Timer 1 is a 1.13ms timeout. If an edge has not been seen since the
  * 			last time the interrupt fired the interrupt determines the state
  * 			between idle and collision.
  *
  */
-void TIM8_UP_TIM13_IRQHandler(void)
+void TIM1_UP_TIM10_IRQHandler(void)
 {
 	// Check if the update interrupt flag is set
-	if (tim8->SR & UIF)
+	if (tim1->SR & UIF)
 	{
 		// If count has not been updated
     	if (was_edge == 0 && state == BUSY)
@@ -764,7 +761,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
     		else
     		{
     		    state = COLLISION;
-    			gpiob->ODR = (gpiob->ODR & GPIO_ODR_Px1) | (1 << 1);
+    			gpiob->ODR |= GPIO_ODR_Px1_SET;
 
     		    is_transmitting = 0;
     		    led_enable(COLLISION_LED_STATE); // Enables third to left LED
@@ -775,7 +772,7 @@ void TIM8_UP_TIM13_IRQHandler(void)
     	was_edge = 0;
 
         // Clear the update interrupt flag
-    	tim8->SR &= ~UIF;
+    	tim1->SR &= ~UIF;
 	}
 }
 
