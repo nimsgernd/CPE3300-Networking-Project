@@ -66,7 +66,7 @@ static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
 static volatile STK *const stk = (STK *)STK_BASE;
 static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
 static volatile ACTIM16B *const tim8 = (ACTIM16B *)TIM8_BASE;
-static volatile GPTIM16B *const tim14 = (GPTIM16B *) TIM14_BASE;
+static volatile GPTIM16B *const tim9 = (GPTIM16B *) TIM9_BASE;
 
 
 static packet transmission = {0x55,0x00,0x00,0x00,0x00,NULL,0xAA};
@@ -100,8 +100,8 @@ static uint8_t rx_data[RXDATA_INITSIZE_BITS];
 
 static char* rx_decoded;
 static int data_size = 0;		// Len of recieved data
-static uint16_t tim14_current_count = 0;
-static uint16_t tim14_previous_count = 0;
+static uint16_t tim9_current_count = 0;
+static uint16_t tim9_previous_count = 0;
 static int new_message = 0;
 static int valid_packet = 1;		// 1 = valid packet recieved, 0 = invalid packet
 static uint8_t crc_table[256];
@@ -215,7 +215,7 @@ void monitor_init(void)
 	tim8->CR1 |= CEN;
 
 	// Enable timer
-	tim14->CR1 |= CEN;
+	tim9->CR1 |= CEN;
 }
 
 
@@ -666,7 +666,7 @@ void post_collision_delay(void)
 
 	stk->CTRL &= STK_CTRL_DIS;
 
-	stk->LOAD = (uint32_t)((double)tim14->CNT * TX_DELAY_SCALAR);
+	stk->LOAD = (uint32_t)((double)tim9->CNT * TX_DELAY_SCALAR);
 
 	stk->VAL = 0;
 
@@ -810,7 +810,7 @@ void TIM2_IRQHandler(void)
 
 		// Store count values at the time of the most recent edge
 		was_edge = 1;
-		tim14_current_count = tim14->CNT;
+		tim9_current_count = tim9->CNT;
 
 		// All other states, BUSY, and IDLE also go to BUSY if not timeout
 		if (state == COLLISION)
@@ -854,12 +854,12 @@ void TIM2_IRQHandler(void)
 			uint16_t delta_t;
 
 			// Calculate time difference
-			if (tim14_current_count >= tim14_previous_count)
+			if (tim9_current_count >= tim9_previous_count)
 			{
-				delta_t = tim14_current_count - tim14_previous_count;
+				delta_t = tim9_current_count - tim9_previous_count;
 			} else {
 				// Handle counter rollover
-			    delta_t = (UINT16_MAX - tim14_previous_count) + tim14_current_count + 1;
+			    delta_t = (UINT16_MAX - tim9_previous_count) + tim9_current_count + 1;
 			}
 				// If edge occured within 506us, ignore.
 				if(delta_t > (THRESHOLD_TICKS/2)-1)
@@ -867,7 +867,7 @@ void TIM2_IRQHandler(void)
 					rx_data[data_size] = curr_edge;
 					data_size++;
 					//store the count of the previous recorded edge
-					tim14_previous_count = tim14_current_count;
+					tim9_previous_count = tim9_current_count;
 				}
 
 			}
