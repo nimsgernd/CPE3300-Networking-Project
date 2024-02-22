@@ -58,7 +58,6 @@
 #define MAX_16 0xFFFF
 #define HALF_BIT_PERIOD_500_US 500e-6
 #define CLOCK_CYCLES_500_US (int)((F_CPU * HALF_BIT_PERIOD_500_US)-1)
-#define CHAR_BIT 8
 
 // Addresses
 static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
@@ -117,7 +116,6 @@ static void transmit(void);
 static uint8_t bitArrayToInt(uint8_t *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
 static uint8_t crc(char* array, int byte_len);
-static void extract_msg(void);
 
 
 /*
@@ -334,15 +332,8 @@ char* get_ascii_data(void)
  *
  * @note The caller is responsible for freeing the memory allocated for the encoded data.
  */
-void encode(packet tpacket)
+void encode(char* msg)
 {
-
-    // Make sure to have enough size in the msg buffer for the original message + packet data
-	char* msg = (char*)malloc(strlen(msg) * BYTE * sizeof(int) + 6*sizeof(uint16_t));
-	snprintf(msg, 303, "%x%x%x%x%x%s%x", tpacket.PREAMBLE, tpacket.SRC, tpacket.DEST,
-			tpacket.LEN, tpacket.CRC, tpacket.MSG, tpacket.TRAILER);
-	//debug
-	printf("packet string: %s\n",msg);
 
 	// Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
     transmission_data = (uint8_t*)malloc(2 * strlen(msg) * BYTE * sizeof(uint8_t));
@@ -544,70 +535,12 @@ void test_parse_packet(void)
 		assert(reception.DEST == 0x02);
 		assert(reception.LEN == 0x00);
 		assert(reception.CRC == 0x01);
-		assert(strcmp(reception.MSG, NULL) == NULL);
+		assert(strcmp(reception.MSG, "\0"));
 		assert(reception.TRAILER == 0xBB);
     }
 }
 
     // TODO: Add more tests as needed
-/**
- * @brief Decodes the received data and stores it in rx_decoded.
- *
- * This function decodes the received data, which is encoded in a specific format,
- * and stores the decoded data in the rx_decoded array. The decoded data is then
- * used for further processing.
- *
- * @note The function assumes that the necessary memory for rx_decoded and temp_ascii
- *       has already been allocated.
- */
-static void extract_msg(void)
-{
-	parse_packet();
-
-    rx_decoded = (char*)calloc(((data_size / BYTE) + 1),sizeof(char));
-
-    if (rx_decoded == NULL)
-    {
-        //printf("Error: Could not allocate memory for decoded message\n\r");
-        return;
-    }
-
-    // One ascii character is 1 byte which is encoded to 16 bits
-    int len = data_size / 8;
-
-    // Temp array to hold only ascii values
-    uint8_t* temp_ascii = (uint8_t*)calloc(BYTE,sizeof(uint8_t));
-
-    // Iterate over all characters
-    for(int i = 0; i < len; i++)
-    {
-		int ascii_index = 0;
-
-    	// For each of the 16 bits that reps 1 byte
-    	for(int j = 0; j < BYTE; j++)
-    	{
-        // The first bit of the pair should be the inverse of the second bit
-        // If this is not the case, there may be an error in the encoded data
-
-    		int rx_index = j + (i*(BYTE));
-
-    		int ascii_bit = rx_data[rx_index];
-    		temp_ascii[ascii_index] = ascii_bit;
-
-    		ascii_index++;
-
-    	}
-
-    	uint8_t char_ascii = bitArrayToInt(temp_ascii, BYTE);
-    	rx_decoded[i] = (char)char_ascii;
-    }
-
-    new_message = 1;
-
-    free(temp_ascii);
-
-}
-
 void print_packet(void)
 {
 	printf("Preamble: %X\n\r", reception.PREAMBLE);
