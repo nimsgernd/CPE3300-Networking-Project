@@ -235,6 +235,9 @@ void user_prompt(void)
 		printf("    the name input\n\r");
 		printf("recip\n\r");
 		printf("    Sets the message recipient based on the name input\n\r");
+		printf("crc\n\r");
+		printf("    Enables or disables crc for the transmission defualt\n\r");
+		printf("    is off\n\r");
 		printf("\n\r");
 		printf("=========================================================\n\r");
 	}
