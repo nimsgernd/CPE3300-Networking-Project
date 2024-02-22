@@ -362,9 +362,9 @@ char* get_ascii_data(void)
  *
  * @note The caller is responsible for freeing the memory allocated for the encoded data.
  */
-void encode(char* msg)
+void encode(char* message)
 {
-	int msg_len = strlen(msg);
+	int msg_len = strlen(message);
 
 	// SRC, RECIEVER, and CRC already set... need to set others in transmission struct
 	transmission.PREAMBLE = 0x55;
@@ -372,22 +372,37 @@ void encode(char* msg)
 	transmission.LEN = msg_len;
 	free(transmission.MSG);
 	transmission.MSG = malloc(msg_len * sizeof(char));
-	strcpy(transmission.MSG, msg);
+	strcpy(transmission.MSG, message);
 
 	if(!transmission.CRC)
 	{
 		transmission.TRAILER = 0xAA;
 	} else
 	{
-		transmission.TRAILER = crc(msg, msg_len);
+		transmission.TRAILER = crc(message, msg_len);
 	}
 
-	// Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
-    transmission_len = 2 * (msg_len * BYTE * (BYTE * NUM_8BIT_FIELDS));
+	// PREAMBLE, SRC, DEST, LEN, CRC to front, TRAILER to back of msg file-scope variable
+
+	// Concatenate preamble, src, dest, len, crc to the beginning of msg, and trailer to the end of msg
+	snprintf(msg, 303, "%c%c%c%c%c%s%c",
+			transmission.PREAMBLE,
+			transmission.SRC,
+			transmission.DEST,
+			transmission.LEN,
+			transmission.CRC,
+			transmission.MSG,
+			transmission.TRAILER);
+
+    // Calculate the new length of msg after concatenation
+    int new_msg_len = strlen(msg);
+
+    // Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
+    transmission_len = 2 * new_msg_len*BYTE;    // Each bit is it's own uint8_t byte
     transmission_data = (uint8_t*)malloc(transmission_len* sizeof(uint8_t));
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
-    for(int i = 0; i < msg_len; i++)
+    for(int i = 0; i < new_msg_len; i++)
     {
         for(int j = BYTE - 1; j >= 0; j--)
         { // Start from the most significant bit
