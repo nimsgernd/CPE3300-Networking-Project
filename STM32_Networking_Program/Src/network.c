@@ -104,7 +104,7 @@ static int data_size = 0;		// Len of recieved data
 static uint16_t tim14_current_count = 0;
 static uint16_t tim14_previous_count = 0;
 static int new_message = 0;
-
+static int valid_packet = 1;		// 1 = valid packet recieved, 0 = invalid packet
 static uint8_t crc_table[256];
 
 /*
@@ -407,18 +407,21 @@ static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
  */
 void parse_packet(void)
 {
-    // Ensure that there is enough data for a complete packet
-    if (data_size < MIN_PACKET_LEN_BYTES)
-    {  	// Each field is 8 bits
-        // Not enough data for a complete packet
-        return;
-    }
 
     reception.PREAMBLE = bitArrayToInt(&rx_data[0], BYTE);
     reception.SRC = bitArrayToInt(&rx_data[BYTE], BYTE);
     reception.DEST = bitArrayToInt(&rx_data[BYTE*2], BYTE);
     reception.LEN = bitArrayToInt(&rx_data[BYTE*3], BYTE);
     reception.CRC = bitArrayToInt(&rx_data[BYTE*4], BYTE);
+
+    // Ensure that there is enough data for a complete packet
+    if (data_size < MIN_PACKET_LEN_BYTES || reception.PREAMBLE != 0x55 || reception.DEST < 0x40 || reception.DEST > 0x42)
+    {  	// Each field is 8 bits
+        // Not enough data for a complete packet
+    	printf("Packet invalid... dropping\n\r");
+    	valid_packet = 0;
+        return;
+    }
 
 
     // Parse the message
@@ -438,9 +441,14 @@ void parse_packet(void)
     // Parse the trailer
     reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 5) * BYTE], BYTE);
 
-
+    valid_packet = 1;
     // new message
     new_message = 1;
+}
+
+int is_valid_packet(void)
+{
+	return valid_packet;
 }
 
 

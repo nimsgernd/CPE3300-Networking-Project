@@ -167,7 +167,7 @@ void user_prompt(void)
 		parse_packet();
 
 		// Checks for a recieved message, prints it to console, then returns to command prompt
-		if(new_message_flag())
+		if(new_message_flag() && is_valid_packet())
 		{
 
 			printf("%s\n\r", get_ascii_data());

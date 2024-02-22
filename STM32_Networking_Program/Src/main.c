@@ -67,7 +67,7 @@ int main(void)
 	console_init();
 
 #ifdef DE_NET_RX
-	test_decode();
+	test_parse_packet();
 #endif
 
     /* Loop forever */

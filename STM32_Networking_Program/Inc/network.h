@@ -102,5 +102,6 @@ extern void reset_rx_data(void);
 extern void print_packet(void);
 extern void test_parse_packet(void);
 extern void parse_packet(void);
+extern int is_valid_packet(void);
 
 #endif
