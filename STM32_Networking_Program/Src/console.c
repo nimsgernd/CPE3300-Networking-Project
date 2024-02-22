@@ -148,6 +148,7 @@ void user_prompt(void)
 		if(new_message_flag())
 		{
 
+			printf("Message from: %s\n\r", usr_addr_find(get_sender_addr()));
 			printf("%s\n\r", get_ascii_data());
 #ifdef DE_NET_RX
 			printf("%d\n\r", get_dataSize());
@@ -158,10 +159,9 @@ void user_prompt(void)
 				printf("%i", data[i]);
 			}
 			printf("\n\r");
-
-			// Reset recived data for more data
-			reset_rx_data();
 #endif
+			// Reset received data for more data
+			reset_rx_data();
 		}
 		else
 		{
@@ -208,11 +208,11 @@ void user_prompt(void)
 	{
 		if(!strcasecmp(token2,"on"))
 		{
-			set_reciever(1);
+			set_crc(1);
 		}
 		else if(!strcasecmp(token2,"off"))
 		{
-			set_reciever(0);
+			set_crc(0);
 		}
 	}
 	else if(!strcmp(token1,"h"))

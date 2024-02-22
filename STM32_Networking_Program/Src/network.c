@@ -262,6 +262,16 @@ void set_reciever(int addr)
 /**
  * @brief
  *
+ * @param state
+ */
+void set_crc(int state)
+{
+	transmission.CRC = state;
+}
+
+/**
+ * @brief
+ *
  * @return
  */
 int get_sender(void)
@@ -277,6 +287,26 @@ int get_sender(void)
 int get_reciever(void)
 {
 	return transmission.DEST;
+}
+
+/**
+ * @brief
+ *
+ * @return
+ */
+int get_crc(void)
+{
+	return transmission.CRC;
+}
+
+/**
+ * @brief
+ *
+ * @return
+ */
+int get_sender_addr(void)
+{
+	return reception.SRC;
 }
 
 /**
