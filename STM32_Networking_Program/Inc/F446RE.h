@@ -53,6 +53,7 @@
 #define TIM2_BASE 			0x40000000
 #define TIM14_BASE			0x40002000
 #define RTC_BASE			0x40002800
+#define TIM1_BASE			0x40010000
 #define TIM8_BASE 			0x40010400
 #define SYSCFG_EXTICR2_BASE 0x4001380C
 #define TIM9_BASE			0x40014000
@@ -75,12 +76,18 @@
 #define UIE	1 << 0		// Timer interrupt enable [0 = disabled, 1 = enabled]
 #define UIF	1 <<0		// Update Interrupt flag
 
-// RCC TIM Enable bit pos for 16-bit timers (TIM3, TIM4)
+// RCC TIM Enable bit pos for 16-bit timers
+#define TIM1EN	1 << 0
 #define TIM2EN 	1 << 0	// [0 = disabled, 1 = enabled]
 #define TIM8EN 	1 << 1
+#define TIM9EN	1 << 16
 #define TIM14EN	1 << 8	// [0 = disabled, 1 = enabled]
 
-// NVIC position of 16-bit timers (TIM3 and TIM4)
+// NVIC position of timers
+#define TIM1_BRK_TIM9_IRQHandler_POS		1 << 24
+#define TIM1_UP_TIM10_IRQHandler_POS		1 << 25
+#define TIM1_TRG_COM_TIM11_IRQHandler_POS	1 << 26
+#define TIM1_CC_IRQHandler_POS				1 << 27
 #define TIM2_POS 			1 << 28	// [0 = disabled, 1 = enabled]
 #define TIM8_UP_TIM13_POS 	44
 
@@ -165,22 +172,39 @@
 #define GPIO_IDR_Px15	1 << 15 // GPIO_IDR PA15 bit
 
 /* ODR Reg */
-#define GPIO_ODR_Px0	~(1 << 0)
-#define GPIO_ODR_Px1	~(1 << 1)
-#define GPIO_ODR_Px2	~(1 << 2)
-#define GPIO_ODR_Px3	~(1 << 3)
-#define GPIO_ODR_Px4	~(1 << 4)
-#define GPIO_ODR_Px5	~(1 << 5)
-#define GPIO_ODR_Px6	~(1 << 6)
-#define GPIO_ODR_Px7	~(1 << 7)
-#define GPIO_ODR_Px8	~(1 << 8)
-#define GPIO_ODR_Px9	~(1 << 9)
-#define GPIO_ODR_Px10	~(1 << 10)
-#define GPIO_ODR_Px11	~(1 << 11)
-#define GPIO_ODR_Px12	~(1 << 12)
-#define GPIO_ODR_Px13	~(1 << 13)
-#define GPIO_ODR_Px14	~(1 << 14)
-#define GPIO_ODR_Px15	~(1 << 15)
+#define GPIO_ODR_Px0_SET	(1 << 0)
+#define GPIO_ODR_Px1_SET	(1 << 1)
+#define GPIO_ODR_Px2_SET	(1 << 2)
+#define GPIO_ODR_Px3_SET	(1 << 3)
+#define GPIO_ODR_Px4_SET	(1 << 4)
+#define GPIO_ODR_Px5_SET	(1 << 5)
+#define GPIO_ODR_Px6_SET	(1 << 6)
+#define GPIO_ODR_Px7_SET	(1 << 7)
+#define GPIO_ODR_Px8_SET	(1 << 8)
+#define GPIO_ODR_Px9_SET	(1 << 9)
+#define GPIO_ODR_Px10_SET	(1 << 10)
+#define GPIO_ODR_Px11_SET	(1 << 11)
+#define GPIO_ODR_Px12_SET	(1 << 12)
+#define GPIO_ODR_Px13_SET	(1 << 13)
+#define GPIO_ODR_Px14_SET	(1 << 14)
+#define GPIO_ODR_Px15_SET	(1 << 15)
+
+#define GPIO_ODR_Px0_RSET	~(1 << 0)
+#define GPIO_ODR_Px1_RSET	~(1 << 1)
+#define GPIO_ODR_Px2_RSET	~(1 << 2)
+#define GPIO_ODR_Px3_RSET	~(1 << 3)
+#define GPIO_ODR_Px4_RSET	~(1 << 4)
+#define GPIO_ODR_Px5_RSET	~(1 << 5)
+#define GPIO_ODR_Px6_RSET	~(1 << 6)
+#define GPIO_ODR_Px7_RSET	~(1 << 7)
+#define GPIO_ODR_Px8_RSET	~(1 << 8)
+#define GPIO_ODR_Px9_RSET	~(1 << 9)
+#define GPIO_ODR_Px10_RSET	~(1 << 10)
+#define GPIO_ODR_Px11_RSET	~(1 << 11)
+#define GPIO_ODR_Px12_RSET	~(1 << 12)
+#define GPIO_ODR_Px13_RSET	~(1 << 13)
+#define GPIO_ODR_Px14_RSET	~(1 << 14)
+#define GPIO_ODR_Px15_RSET	~(1 << 15)
 
 /* ALternate Function Settings */
 // Modes
