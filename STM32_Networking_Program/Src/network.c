@@ -361,6 +361,9 @@ char* get_ascii_data(void)
  */
 void encode(char* message)
 {
+	// Clear msg... holds the total appended packet
+    memset(msg, '\0', sizeof(msg));
+
 	int msg_len = strlen(message);
 
 	// SRC, RECIEVER, and CRC already set... need to set others in transmission struct
@@ -392,10 +395,10 @@ void encode(char* message)
 			transmission.TRAILER);
 
     // Calculate the new length of msg after concatenation
-    int new_msg_len = strlen(msg);
+    int new_msg_len = sizeof(msg);
 
     // Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
-    transmission_len = 2 * new_msg_len*BYTE;    // Each bit is it's own uint8_t byte
+    transmission_len = 2 * new_msg_len*BYTE;    // Convert to num bits * 2 for manchester
     transmission_data = (uint8_t*)malloc(transmission_len* sizeof(uint8_t));
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
@@ -408,6 +411,7 @@ void encode(char* message)
             transmission_data[2*((i+1)*BYTE - j - 1) + 1] = bit;
         }
     }
+
 
 
 
@@ -460,11 +464,15 @@ static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
 void parse_packet(void)
 {
 
+	free(reception.MSG);
     reception.PREAMBLE = bitArrayToInt(&rx_data[0], BYTE);
     reception.SRC = bitArrayToInt(&rx_data[BYTE], BYTE);
     reception.DEST = bitArrayToInt(&rx_data[BYTE*2], BYTE);
     reception.LEN = bitArrayToInt(&rx_data[BYTE*3], BYTE);
     reception.CRC = bitArrayToInt(&rx_data[BYTE*4], BYTE);
+    reception.MSG = malloc(reception.LEN * sizeof(char));
+    char message[reception.LEN];
+
 
     // Ensure that there is enough data for a complete packet
     if (data_size < MIN_PACKET_LEN_BYTES || reception.PREAMBLE != 0x55 || reception.DEST < 0x40 || reception.DEST > 0x42)
@@ -479,16 +487,16 @@ void parse_packet(void)
     // Parse the message
     if(!reception.LEN)
     {
-        memset(msg, '\0', sizeof(msg));
+        memset(message, '\0', sizeof(message));
     } else {
     	for (int i = 0; i < reception.LEN; i++)
 		{
-			msg[i] = bitArrayToInt(&rx_data[(i + 5) * BYTE], BYTE);
+    		message[i] = bitArrayToInt(&rx_data[(i + 5) * BYTE], BYTE);
 		}
     }
 
     // Set msg in struct
-    strcpy(reception.MSG, msg);
+    strcpy(reception.MSG, message);
 
     // Parse the trailer
     reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 5) * BYTE], BYTE);
@@ -496,6 +504,8 @@ void parse_packet(void)
     valid_packet = 1;
     // new message
     new_message = 1;
+
+
 }
 
 /**
@@ -858,11 +868,11 @@ void TIM2_IRQHandler(void)
 		  */
 		// If we're recieving
 		// For first edge, include preceeding 0
-		if(curr_edge == prev_edge)
-		{
-			rx_data[0] = '0';
-			data_size++;
-		}
+//		if(curr_edge == prev_edge)
+//		{
+//			rx_data[0] = '0';
+//			data_size++;
+//		}
 
 		if(is_recieving)
 		{
