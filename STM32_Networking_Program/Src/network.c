@@ -397,9 +397,12 @@ void encode(char* message)
     // Calculate the new length of msg after concatenation
     int new_msg_len = transmission.LEN + NUM_8BIT_FIELDS;
 
+
     // Make sure to have enough size for Manchester encoding i.e., 2*bits + Packet data
     transmission_len = 2 * new_msg_len*BYTE;    // Convert to num bits * 2 for manchester
     transmission_data = (uint8_t*)malloc(transmission_len* sizeof(uint8_t));
+
+    printf("Transmission len: %i\n\r", transmission_len);
 
     // Convert every bit to Manchester pair i.e. bit 0 = bit to transmit, bit 1 = ~bit0
     for(int i = 0; i < new_msg_len; i++)
@@ -463,8 +466,15 @@ static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
  */
 void parse_packet(void)
 {
+
+	printf("Date size: %i\n\r", data_size);
+
 	for(int i = 0; i < data_size; i++)
 	{
+		if((i%8) == 0)
+		{
+			printf("  ");
+		}
 		printf("%i", rx_data[i]);
 	}
 	printf("\n\r");
@@ -484,7 +494,9 @@ void parse_packet(void)
     {  	// Each field is 8 bits
         // Not enough data for a complete packet
     	printf("Packet invalid... dropping\n\r");
+    	reset_rx_data();
     	valid_packet = 0;
+
         return;
     }
 
@@ -497,14 +509,17 @@ void parse_packet(void)
     	for (int i = 0; i < reception.LEN; i++)
 		{
     		message[i] = bitArrayToInt(&rx_data[(i + 5) * BYTE], BYTE);
+    		printf("MSG: %i i: %i\n\r", message[i], i);
 		}
     }
+
+    printf("Decoded msg field: %s\n\r", message);
 
     // Set msg in struct
     strcpy(reception.MSG, message);
 
 
-    // Parse the trailer
+    // Parse the trailerr
     reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 5) * BYTE], BYTE);
 
     valid_packet = 1;
@@ -682,7 +697,7 @@ static void transmit(void)
  */
 void reset_rx_data(void)
 {
-	free(rx_decoded);
+	memset(rx_data, 0, RXDATA_INITSIZE_BITS);
     data_size = 0;	// array begins empty
 }
 
