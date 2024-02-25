@@ -363,6 +363,7 @@ void encode(char* message)
 {
 	// Clear msg... holds the total appended packet
     memset(msg, '\0', sizeof(msg));
+    memset(rx_data, '\0', RXDATA_INITSIZE_BITS);
 
 	int msg_len = strlen(message);
 
