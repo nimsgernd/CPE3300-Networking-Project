@@ -227,9 +227,9 @@ void clear(void)
 }
 
 /**
- * @brief
+ * @brief Flag set to true if a new message is received.
  *
- * @return
+ * @return 1 if new message, 0 if no new message
  */
 int new_message_flag(void)
 {
@@ -237,78 +237,79 @@ int new_message_flag(void)
 }
 
 /**
- * @brief
+ * @brief Sets the sender address of the transmission.
  *
- * @param addr
+ * @param addr - 8 bit address of the sender
  */
-void set_sender(int addr)
+void set_transmission_sender(int addr)
 {
 	transmission.SRC = addr;
 }
 
 /**
- * @brief
+ * @brief Sets the receiver address of the transmission.
  *
- * @param addr
+ * @param addr - 8 bit address of the receiver
  */
-void set_reciever(int addr)
+void set_transmission_reciever(int addr)
 {
 	transmission.DEST = addr;
 }
 
 /**
- * @brief
+ * @brief Sets the CRC flag on the transmission.
  *
- * @param state
+ * @param state - 1 bit CRC flag (1 = CRC enabled, 0 = CRC disabled)
  */
-void set_crc(int state)
+void set_transmission_crc(int state)
 {
 	transmission.CRC = state;
 }
 
 /**
- * @brief
+ * @brief Returns the address that the transmission is going to be sent from.
  *
- * @return
+ * @return 8 bit address
  */
-int get_sender(void)
+int get_transmission_sender(void)
 {
 	return transmission.SRC;
 }
 
 /**
- * @brief
+ * @brief Returns the address that the transmission is going to be sent to.
  *
- * @return
+ * @return 8 bit address
  */
-int get_reciever(void)
+int get_transmission_reciever(void)
 {
 	return transmission.DEST;
 }
 
 /**
- * @brief
+ * @brief Returns the CRC flag that is set in the transmission message.
  *
- * @return
+ * @return 1 bit flag (1 = enabled, 0 = disabled)
  */
-int get_crc(void)
+static int get_transmission_crc(void)
 {
 	return transmission.CRC;
 }
 
 /**
- * @brief
+ * @brief Returns the address that the received message was from.
  *
- * @return
+ * @return 8 bit address
  */
-int get_sender_addr(void)
+int get_reciever_sender(void)
 {
 	return reception.SRC;
 }
 
 /**
- * @brief	Relevant Setters/Getters.
+ * @brief
  *
+ * @return
  */
 int get_dataSize(void)
 {
@@ -316,7 +317,9 @@ int get_dataSize(void)
 }
 
 /**
- * @brief	Returns the raw rx buffer data
+ * @brief Returns the raw rx buffer data
+ *
+ * @return
  */
 int* get_raw_data(void)
 {
@@ -337,9 +340,10 @@ int* get_raw_data(void)
     return rx_data_copy;
 }
 
-
 /**
- * @brief	Retrns ascii encoded rx_data
+ * @brief Returns ASCII encoded rx_data
+ *
+ * @return
  */
 char* get_ascii_data(void)
 {
@@ -437,10 +441,10 @@ void encode(char* message)
 }
 
 /**
- * Converts a bit array to an integer.
+ * @brief Converts a bit array to an integer.
  *
- * @param bitArray The bit array to convert.
- * @param length The length of the bit array.
+ * @param bitArray - The bit array to convert.
+ * @param length - The length of the bit array.
  * @return The converted integer.
  */
 static uint8_t bitArrayToInt(uint8_t *bitArray, int length) {
@@ -501,12 +505,12 @@ void parse_packet(void)
         return;
     }
 
-
     // Parse the message
     if(!reception.LEN)
     {
         memset(message, '\0', sizeof(message));
-    } else {
+    }
+    else {
     	for (int i = 0; i < reception.LEN; i++)
 		{
     		message[i] = bitArrayToInt(&rx_data[(i + 5) * BYTE], BYTE);
@@ -519,9 +523,20 @@ void parse_packet(void)
     // Set msg in struct
     strcpy(reception.MSG, message);
 
-
     // Parse the trailerr
     reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 5) * BYTE], BYTE);
+
+    if(reception.CRC)
+    {
+    	if(reception.TRAILER != crc(reception.MSG,reception.LEN))
+    	{
+    		printf("Failed CRC check\n\r");
+    	}
+    	else
+    	{
+    		printf("Passed CRC check\n\r");
+    	}
+    }
 
     valid_packet = 1;
     // new message
@@ -723,10 +738,11 @@ void post_collision_delay(void)
 }
 
 /**
- * @brief
+ * @brief Populates a look up table for all possible CRC8 values based on the
+ * 		  the input polynomial
  *
- * @param crc_table
- * @param poly
+ * @param crc_table - Reference to the 256 8 bit table
+ * @param poly - The polynomial used to calculate the CRC
  */
 void pop_crc_table(uint8_t crc_table[256], uint8_t poly)
 {

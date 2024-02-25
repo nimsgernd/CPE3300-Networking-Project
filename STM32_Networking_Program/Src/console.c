@@ -101,9 +101,9 @@ void user_prompt(void)
 	{
 		if(token2)
 		{
-			if(get_sender())
+			if(get_transmission_sender())
 			{
-				if(get_reciever())
+				if(get_transmission_reciever())
 				{
 					// encode packet and transmit
 					 // Append null terminator
@@ -130,11 +130,11 @@ void user_prompt(void)
 	{
 		if(token2)
 		{
-			int temp = get_reciever();
-			set_reciever(0xFF);
+			int temp = get_transmission_reciever();
+			set_transmission_reciever(0xFF);
 			encode(token2);
 			printf("broadcasting '%s'...\n\r",token2);
-			set_reciever(temp);
+			set_transmission_reciever(temp);
 		}
 		else
 		{
@@ -150,7 +150,7 @@ void user_prompt(void)
 		if(new_message_flag())
 		{
 
-			printf("Message from: %s\n\r", usr_addr_find(get_sender_addr()));
+			printf("Message from: %s\n\r", usr_addr_find(get_reciever_sender()));
 			printf("%s\n\r", get_ascii_data());
 #ifdef DE_NET_RX
 			printf("%d\n\r", get_dataSize());
@@ -175,7 +175,7 @@ void user_prompt(void)
 		int addr = addr_usr_find(token2);
 		if(addr != 0x00)
 		{
-			set_sender(addr);
+			set_transmission_sender(addr);
 		}
 		else
 		{
@@ -187,7 +187,7 @@ void user_prompt(void)
 		int addr = addr_usr_find(token2);
 		if(addr != 0x00)
 		{
-			set_reciever(addr);
+			set_transmission_reciever(addr);
 		}
 		else
 		{
@@ -210,11 +210,11 @@ void user_prompt(void)
 	{
 		if(!strcasecmp(token2,"on"))
 		{
-			set_crc(1);
+			set_transmission_crc(1);
 		}
 		else if(!strcasecmp(token2,"off"))
 		{
-			set_crc(0);
+			set_transmission_crc(0);
 		}
 	}
 	else if(!strcmp(token1,"h"))
