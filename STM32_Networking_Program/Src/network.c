@@ -367,7 +367,9 @@ void encode(char* message)
 {
 	// Clear msg... holds the total appended packet
     memset(msg, '\0', sizeof(msg));
-    memset(rx_data, '\0', RXDATA_INITSIZE_BITS);
+
+    // Clear whole array
+    memset(rx_data, '\0', RXDATA_INITSIZE_BITS*sizeof(rx_data[0]));
 
 	int msg_len = strlen(message);
 
@@ -491,7 +493,7 @@ void parse_packet(void)
     reception.LEN = bitArrayToInt(&rx_data[BYTE*3], BYTE);
     reception.CRC = bitArrayToInt(&rx_data[BYTE*4], BYTE);
     reception.MSG = malloc(reception.LEN * sizeof(char));
-    char message[reception.LEN];
+    char message[reception.LEN+1];
 
 
     // Ensure that there is enough data for a complete packet
@@ -508,7 +510,7 @@ void parse_packet(void)
     // Parse the message
     if(!reception.LEN)
     {
-        memset(message, '\0', sizeof(message));
+        memset(message, '\0', reception.LEN* sizeof(message)+1);
     }
     else {
     	for (int i = 0; i < reception.LEN; i++)
@@ -521,7 +523,7 @@ void parse_packet(void)
     printf("Decoded msg field: %s\n\r", message);
 
     // Set msg in struct
-    strcpy(reception.MSG, message);
+    reception.MSG = strdup(message);
 
     // Parse the trailerr
     reception.TRAILER = bitArrayToInt(&rx_data[(reception.LEN + 5) * BYTE], BYTE);
@@ -538,10 +540,11 @@ void parse_packet(void)
     	}
     }
 
+
     valid_packet = 1;
+
     // new message
     new_message = 1;
-
 
 }
 
@@ -713,7 +716,7 @@ static void transmit(void)
  */
 void reset_rx_data(void)
 {
-	memset(rx_data, 0, RXDATA_INITSIZE_BITS);
+	memset(rx_data, 0, RXDATA_INITSIZE_BITS*sizeof(rx_data[0]));
     data_size = 0;	// array begins empty
 }
 
@@ -907,11 +910,6 @@ void TIM2_IRQHandler(void)
 		  */
 		// If we're recieving
 		// For first edge, include preceeding 0
-//		if(curr_edge == prev_edge)
-//		{
-//			rx_data[0] = '0';
-//			data_size++;
-//		}
 
 		if(is_recieving)
 		{
