@@ -497,7 +497,7 @@ void parse_packet(void)
 
 
     // Ensure that there is enough data for a complete packet
-    if (data_size < MIN_PACKET_LEN_BYTES || reception.PREAMBLE != 0x55 || reception.DEST < 0x40 || reception.DEST > 0x42)
+    if (data_size < MIN_PACKET_LEN_BYTES || reception.PREAMBLE != 0x55)
     {  	// Each field is 8 bits
         // Not enough data for a complete packet
     	printf("Packet invalid... dropping\n\r");
@@ -505,6 +505,11 @@ void parse_packet(void)
     	valid_packet = 0;
 
         return;
+    }
+
+    if(reception.DEST != transmission.SRC)
+    {
+    	printf("Message not for us\n\r");
     }
 
     // Parse the message
@@ -731,6 +736,10 @@ void post_collision_delay(void)
 
 	tx_delay = YES;
 
+	is_transmitting = 0;
+
+	current_bit = 0;
+
 	stk->CTRL &= STK_CTRL_DIS;
 
 	stk->LOAD = (uint16_t)((double)tim9->CNT * TX_DELAY_SCALAR);
@@ -884,9 +893,8 @@ void TIM2_IRQHandler(void)
 		if (state == COLLISION)
 		{
 			state = BUSY;
-			led_enable(BUSY_LED_STATE); // Enables second to left LED
-
 			post_collision_delay();
+			led_enable(BUSY_LED_STATE); // Enables second to left LED
 		}
 		// When state goes IDLE -> BUSY, begin receiving data
 		else if(state == IDLE)
