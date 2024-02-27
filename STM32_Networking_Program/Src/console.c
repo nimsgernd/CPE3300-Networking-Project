@@ -109,6 +109,9 @@ void user_prompt(void)
 					 // Append null terminator
 					encode(token2);
 					printf("transmitting '%s'...\n\r",token2);
+
+				    // Clear previous contents of rx_msg
+				    reset_tx_data();
 				}
 				else
 				{

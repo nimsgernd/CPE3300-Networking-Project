@@ -108,4 +108,5 @@ extern void TIM8_UP_TIM13_IRQHandler(void);
 extern void TIM2_IRQHandler(void);
 extern void parse_packet(void);
 extern void reset_rx_data(void);
+extern void reset_tx_data(void);
 #endif

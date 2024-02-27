@@ -298,6 +298,12 @@ static int get_transmission_crc(void)
 	return tx_crc;
 }
 
+void reset_tx_data(void)
+{
+	free(transmission_data);
+
+}
+
 /**
  * @brief Returns the address that the received message was from.
  *
@@ -595,10 +601,10 @@ static void transmit(void)
 	{
 		current_bit = 0;
 		// Frees transmission_data
-		free(transmission_data);
+//		free(transmission_data);
 
 		// Set to NULL
-		transmission_data = NULL;
+//		transmission_data = NULL;
 	}
 }
 
