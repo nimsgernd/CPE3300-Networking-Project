@@ -507,9 +507,6 @@ void parse_packet(void)
         return;
     }
 
-    // Clear previous contents of rx_msg
-    reset_rx_data();
-
     // Parse the message
     if(!rx_len)
     {
@@ -547,6 +544,9 @@ void parse_packet(void)
     	}
     }
 
+
+    // Clear previous contents of rx_msg
+    reset_rx_data();
 
     valid_packet = 1;
 
