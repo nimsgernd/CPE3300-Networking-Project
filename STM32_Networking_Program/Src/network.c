@@ -519,11 +519,15 @@ void parse_packet(void)
     	for (int i = 0; i < rx_len; i++)
 		{
     		message[i] = bitArrayToInt(&rx_data[(i + 5) * BYTE], BYTE);
-    		printf("MSG: %i i: %i\n\r", message[i], i);
+    		printf("MSG: %c i: %i\n\r", message[i], i);
 		}
     }
 
+    // Add null terminator
+    message[rx_len] = '\0';
+
     printf("Decoded msg field: %s\n\r", message);
+
 
     // Set msg in struct
     strcpy(rx_msg, message);
