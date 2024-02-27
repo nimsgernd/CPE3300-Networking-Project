@@ -508,7 +508,7 @@ void parse_packet(void)
     }
 
     // Clear previous contents of rx_msg
-    memset(rx_msg, '\0', rx_len * sizeof(rx_msg[0]));
+    reset_rx_data();
 
     // Parse the message
     if(!rx_len)
