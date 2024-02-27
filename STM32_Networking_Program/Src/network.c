@@ -369,6 +369,8 @@ void encode(char* message)
 {
 	// Clear msg... holds the total appended packet
     memset(msg, '\0', MAX_MSG_LEN_BYTES*sizeof(msg[0]));
+    memset(tx_msg, '\0', MAX_MSG_LEN_BYTES*sizeof(msg[0]));
+
 
     // Clear whole array
     memset(rx_data, '\0', RXDATA_INITSIZE_BITS*sizeof(rx_data[0]));
@@ -426,20 +428,20 @@ void encode(char* message)
 
 
 // Uncomment below to check transmission_data
-//    printf("\n");
-//    // Output the encoded bits with spaces
-//    for(int i = 0; i < transmission_len; i++)
-//    {
-//        printf("%d", transmission_data[i]);
-//        if((i+1)%16 == 0)
-//        {
-//        	printf("    ");
-//        }else if ((i + 1) % 2 == 0)
-//        {
-//            printf(" "); // Add a space after every pair of bits
-//        }
-//    }
-//    printf("\n");
+    printf("\n");
+    // Output the encoded bits with spaces
+    for(int i = 0; i < transmission_len; i++)
+    {
+        printf("%d", transmission_data[i]);
+        if((i+1)%16 == 0)
+        {
+        	printf("    ");
+        }else if ((i + 1) % 2 == 0)
+        {
+            printf(" "); // Add a space after every pair of bits
+        }
+    }
+    printf("\n");
 }
 
 /**
@@ -506,12 +508,12 @@ void parse_packet(void)
     }
 
     // Clear previous contents of rx_msg
-    memset(rx_msg, '\0', rx_len+1 * sizeof(rx_msg[0]));
+    memset(rx_msg, '\0', rx_len * sizeof(rx_msg[0]));
 
     // Parse the message
     if(!rx_len)
     {
-        memset(message, '\0', rx_len+1* sizeof(message[0])+1);
+        memset(message, '\0', rx_len* sizeof(message[0])+1);
     }
     else {
     	for (int i = 0; i < rx_len; i++)
