@@ -705,7 +705,7 @@ static void transmit(void)
 
 		gpiob->ODR |= GPIO_ODR_Px1_SET;
 	}
-	if(current_bit == transmission_len)
+	if(current_bit > transmission_len)
 	{
 		current_bit = 0;
 		// Frees transmission_data
