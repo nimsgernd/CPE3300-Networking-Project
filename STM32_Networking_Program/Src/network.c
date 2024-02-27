@@ -601,10 +601,10 @@ static void transmit(void)
 	{
 		current_bit = 0;
 		// Frees transmission_data
-//		free(transmission_data);
+		free(transmission_data);
 
 		// Set to NULL
-//		transmission_data = NULL;
+		transmission_data = NULL;
 	}
 }
 
