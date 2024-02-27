@@ -107,7 +107,6 @@ void user_prompt(void)
 				{
 					// encode packet and transmit
 					 // Append null terminator
-					strcat(token2, "\0");
 					encode(token2);
 					printf("transmitting '%s'...\n\r",token2);
 				}
