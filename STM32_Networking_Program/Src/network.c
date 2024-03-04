@@ -503,7 +503,7 @@ void parse_packet(void)
 
 
     // Ensure that there is enough data for a complete packet
-    if (data_size < MIN_PACKET_LEN_BYTES || rx_preamble != 0x55 || rx_dest < 0x40 || rx_dest > 0x42)
+    if (data_size < MIN_PACKET_LEN_BYTES || rx_preamble != 0x55 || rx_dest == 0)
     {  	// Each field is 8 bits
         // Not enough data for a complete packet
     	printf("Packet invalid... dropping\n\r");
