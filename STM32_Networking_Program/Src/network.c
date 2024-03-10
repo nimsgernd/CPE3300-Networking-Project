@@ -288,15 +288,6 @@ int get_transmission_reciever(void)
 	return tx_dest;
 }
 
-/**
- * @brief Returns the CRC flag that is set in the transmission message.
- *
- * @return 1 bit flag (1 = enabled, 0 = disabled)
- */
-static int get_transmission_crc(void)
-{
-	return tx_crc;
-}
 
 void reset_tx_data(void)
 {
@@ -486,7 +477,7 @@ void parse_packet(void)
 
 	for(int i = 0; i < data_size; i++)
 	{
-		if((i%8) == 0)
+		if((i%BYTE) == 0)
 		{
 			printf("  ");
 		}
@@ -683,7 +674,7 @@ uint8_t crc(char* array, int byte_len)
 	while(byte_len--)
 	{
 		i = (crc ^ *array++);
-		crc = (crc_table[i] ^ (crc << 8));
+		crc = (crc_table[i] ^ (crc << BYTE));
 	}
 
 	return crc;
