@@ -45,21 +45,24 @@
 #include "network.h"
 
 /*
- ******************************************************************************
- * Variables
- ******************************************************************************
- */
+ ***************************************************************************************************
+ * 												Macros
+ ***************************************************************************************************
+*/
 
-// Definitions
 #define IDLE_LED_STATE (int)0b1000000000	  // Left most LED value
 #define BUSY_LED_STATE (int)0b0100000000	  // Second to left LED value
 #define COLLISION_LED_STATE (int)0b0010000000 // Third to left LED value
 #define ERROR_LED_STATE (int)0b1111111111	  // ALL LED value
-#define MAX_16 0xFFFF
-#define HALF_BIT_PERIOD_500_US 500e-6
-#define CLOCK_CYCLES_500_US (int)((F_CPU * HALF_BIT_PERIOD_500_US)-1)
+#define MAX_16 0xFFFF						  // Max 16 bit number
+#define HALF_BIT_PERIOD_500_US 500e-6		  // 500 uS
+#define CLOCK_CYCLES_500_US (int)((F_CPU * HALF_BIT_PERIOD_500_US)-1)	// # clock cycles in 500 uS
 
-// Addresses
+/*
+ ***************************************************************************************************
+ * 									Addresses & Control Registers
+ ***************************************************************************************************
+*/
 static volatile uint32_t *const iser = (uint32_t *)NVIC_BASE;
 static volatile RCC *const rcc = (RCC *)RCC_BASE;
 static volatile GPIO *const gpiob = (GPIO *)GPIOB_BASE;
@@ -68,18 +71,17 @@ static volatile GPTIM16B32B *const tim2 = (GPTIM16B32B *)TIM2_BASE;
 static volatile ACTIM16B *const tim1 = (ACTIM16B *)TIM1_BASE;
 static volatile GPTIM16B *const tim9 = (GPTIM16B *) TIM9_BASE;
 
+/*
+ ***************************************************************************************************
+ * 										File-Scope Variables
+ ***************************************************************************************************
+*/
+
+/* Message Tracking */
 static uint8_t tx_src, tx_dest, tx_preamble, tx_len, tx_crc,tx_trailer;
 static char tx_msg[MAX_MSG_LEN_BYTES];
-
 static uint8_t rx_src, rx_dest, rx_preamble, rx_len, rx_crc,rx_trailer;
 static char rx_msg[MAX_MSG_LEN_BYTES];
-
-// State
-static State state = BUSY;	// Current state
-static Delay tx_delay = NO;	// Collision to Busy delay flag
-
-// Timer Variables
-static volatile char was_edge = 0;
 
 // Manchester Encoded Transmission Data
 static uint8_t* transmission_data = NULL;
@@ -89,7 +91,14 @@ static int transmission_len = 0;
 static int current_bit = 0;
 static int is_transmitting = 1;	// 0 = No IDLE state to start, 1 = IDLE state to start
 
-// TODO: REMOVE ONCE HEADER ADDED... IF header not supported, data MUST start with logic-0
+// State
+static State state = BUSY;	// Current state
+static Delay tx_delay = NO;	// Collision to Busy delay flag
+
+// Timer Variables
+static volatile char was_edge = 0;
+
+/* ISR Variables */
 static int prev_edge = 1;	// 0 = previous edge was logic 0, 1 = previous edge was logic 1
 static int curr_edge = 1;
 static int is_recieving = 0;
@@ -109,22 +118,21 @@ static int valid_packet = 1;		// 1 = valid packet recieved, 0 = invalid packet
 static uint8_t crc_table[256];
 
 /*
- ******************************************************************************
- * Function Prototypes
- ******************************************************************************
- */
+ ***************************************************************************************************
+ * 										Function Prototypes
+ ***************************************************************************************************
+*/
 
 static void transmit(void);
 static uint8_t bitArrayToInt(uint8_t *bitArray, int length);
 static void pop_crc_table(uint8_t crc_table[256], uint8_t poly);
 static uint8_t crc(char* array, int byte_len);
 
-
 /*
- ******************************************************************************
- * Function Definitions
- ******************************************************************************
- */
+ ***************************************************************************************************
+ * 										Inits & Resets
+ ***************************************************************************************************
+*/
 
 /**
  * @brief Initializes the monitor.
@@ -193,7 +201,6 @@ void monitor_init(void)
 	// (rising edge, falling edge, or both)
 	tim2->CCER |= (CC2P | CC2NP); // Trigger on rising (CC1P)
 									//          + falling edges (CC1NP)
-    
 	// Enable the interrupt on capture compare
 	tim2->DIER |= (CC2IE | CC1IE);
 
@@ -219,6 +226,25 @@ void monitor_init(void)
 
 
 /**
+ * @brief	frees received data and resets to defaults
+ *
+ */
+void reset_rx_data(void)
+{
+	memset(rx_data, 0, RXDATA_INITSIZE_BITS*sizeof(rx_data[0]));
+    data_size = 0;	// array begins empty
+}
+
+/**
+ * @brief 	Resets the transmission data array
+ */
+void reset_tx_data(void)
+{
+	free(transmission_data);
+
+}
+
+/**
  * @brief	Frees the dynamically allocated memory
  *			designated for the decoded data.
  *
@@ -228,16 +254,11 @@ void clear(void)
 	free(rx_decoded);
 }
 
-/**
- * @brief Flag set to true if a new message is received.
- *
- * @return 1 if new message, 0 if no new message
- */
-int new_message_flag(void)
-{
-	return new_message;
-}
-
+/*
+ ***************************************************************************************************
+ * 										Getters & Setters
+ ***************************************************************************************************
+*/
 /**
  * @brief Sets the sender address of the transmission.
  *
@@ -286,13 +307,6 @@ int get_transmission_sender(void)
 int get_transmission_reciever(void)
 {
 	return tx_dest;
-}
-
-
-void reset_tx_data(void)
-{
-	free(transmission_data);
-
 }
 
 /**
@@ -348,6 +362,16 @@ char* get_ascii_data(void)
 {
 	new_message = 0;
 	return rx_msg;
+}
+
+/**
+ * @brief Flag set to true if a new message is received.
+ *
+ * @return 1 if new message, 0 if no new message
+ */
+int new_message_flag(void)
+{
+	return new_message;
 }
 
 /**
@@ -567,10 +591,14 @@ int is_valid_packet(void)
 /**
  * @brief Transmits data using Manchester encoding.
  *
- * This function transmits Manchester 1 Pair bit to PB1. It adjusts the transmission every 500 uS.
- * If there is data to transmit, it sets the is_transmitting flag to 1 and updates the output data register (ODR) of GPIOB.
- * If there is no data to transmit, it sets the is_transmitting flag to 0 and updates the ODR of GPIOB to transmit a logic high.
- * After transmitting all the bits, it resets the current_bit counter, frees the transmission_data memory, and sets it to NULL.
+ * This function transmits Manchester 1 Pair bit to PB1.
+ * It adjusts the transmission every 500 uS.
+ * If there is data to transmit, it sets the is_transmitting flag
+ * to 1 and updates the output data register (ODR) of GPIOB.
+ * If there is no data to transmit, it sets the is_transmitting
+ * flag to 0 and updates the ODR of GPIOB to transmit a logic high.
+ * After transmitting all the bits, it resets the current_bit
+ * counter, frees the transmission_data memory, and sets it to NULL.
  */
 static void transmit(void)
 {
@@ -597,16 +625,6 @@ static void transmit(void)
 		// Set to NULL
 		transmission_data = NULL;
 	}
-}
-
-/**
- * @brief	frees received data and resets to defaults
- *
- */
-void reset_rx_data(void)
-{
-	memset(rx_data, 0, RXDATA_INITSIZE_BITS*sizeof(rx_data[0]));
-    data_size = 0;	// array begins empty
 }
 
 /**
@@ -660,11 +678,12 @@ void pop_crc_table(uint8_t crc_table[256], uint8_t poly)
 }
 
 /**
- * @brief
+ * Calculates the CRC (Cyclic Redundancy Check) value
+ * for the given array of bytes.
  *
- * @param array
- * @param byte_len
- * @return
+ * @param array The array of bytes to calculate the CRC for.
+ * @param byte_len The length of the array in bytes.
+ * @return The calculated CRC value.
  */
 uint8_t crc(char* array, int byte_len)
 {
@@ -680,6 +699,14 @@ uint8_t crc(char* array, int byte_len)
 	return crc;
 }
 
+
+
+/*
+ ***************************************************************************************************
+ * 									Interrupt Service Routines
+ ***************************************************************************************************
+*/
+
 /**
  * @brief Handler for the post collision delay flag
  *
@@ -691,10 +718,11 @@ void SysTick_Handler(void)
 	tx_delay = NO;
 }
 
+
 /**
- * @brief	Timer 1 is a 1.13ms timeout. If an edge has not been seen since the
- * 			last time the interrupt fired the interrupt determines the state
- * 			between idle and collision.
+ * Timer 1 is a 1.13ms timeout. If an edge has not been seen since the
+ * last time the interrupt fired the interrupt determines the state
+ * between idle and collision.
  *
  */
 void TIM1_UP_TIM10_IRQHandler(void)
@@ -733,11 +761,15 @@ void TIM1_UP_TIM10_IRQHandler(void)
 }
 
 /**
- * TIM2 IRQ handler for CC1IF and CC2IF. If the interrupt source is CC1IF, it checks if the transmitter is
- * ready to transmit and then calls the transmit function. If the interrupt source is
- * CC2IF, it handles the receiving of data. It checks for edge transitions and stores
- * the received data. It also handles the state transitions from IDLE to BUSY and
- * COLLISION to BUSY. This function clears the interrupt flags manually after handling
+ * TIM2 IRQ handler for CC1IF and CC2IF. If the interrupt
+ * source is CC1IF, it checks if the transmitter is
+ * ready to transmit and then calls the transmit function.
+ * If the interrupt source is
+ * CC2IF, it handles the receiving of data. It checks for
+ * edge transitions and stores
+ * the received data. It also handles the state transitions
+ * from IDLE to BUSY and COLLISION to BUSY. This function
+ * clears the interrupt flags manually after handling
  * the interrupts.
  */
 void TIM2_IRQHandler(void)
